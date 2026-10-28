@@ -1,5 +1,5 @@
 {
-  "snapshot_utc": "2026-10-28T09:29:25.209366+00:00",
+  "snapshot_utc": "2026-10-28T10:05:52.793960+00:00",
   "scope": "Only this workspace sessions and supplied Doubao bill-task artifacts",
   "format": "Visible original event objects with source line references; email/key redaction; hidden reasoning and system/developer context excluded",
   "sessions": [
@@ -7,25 +7,25 @@
       "file": "docs/ai-records/codex/rollout-2026-10-27T23-21-23-01a1812b-a623-7710-a6f2-1baa09287a39.jsonl",
       "session_id": "01a1812b-a623-7710-a6f2-1baa09287a39",
       "role": "main",
-      "source_lines": 1434,
-      "exported_records": 364,
+      "source_lines": 1629,
+      "exported_records": 421,
       "omitted_categories": {
         "session_meta:metadata": 1,
-        "event_msg:task_started": 36,
+        "event_msg:task_started": 39,
         "response_item:additional_tools": 1,
-        "response_item:message": 10,
-        "world_state:metadata": 12,
-        "turn_context:metadata": 36,
-        "event_msg:thread_settings_applied": 36,
-        "event_msg:item_completed": 361,
-        "token_usage_record:metadata": 160,
-        "event_msg:token_count": 181,
-        "event_msg:task_complete": 35,
-        "response_item:reasoning": 127,
+        "response_item:message": 11,
+        "world_state:metadata": 13,
+        "turn_context:metadata": 39,
+        "event_msg:thread_settings_applied": 39,
+        "event_msg:item_completed": 416,
+        "token_usage_record:metadata": 184,
+        "event_msg:token_count": 205,
+        "event_msg:task_complete": 38,
+        "response_item:reasoning": 148,
         "inter_agent_communication_metadata:metadata": 37,
         "response_item:agent_message": 37
       },
-      "sha256": "1489e14f67d6a6d7c8a15f7d10324a7b197e3a253a61c2872b124fb9e0bec782"
+      "sha256": "470bfa20f78194a3d5ec2f46f7c3923caa7fafd4111e304e73035e14db59d8e5"
     },
     {
       "file": "docs/ai-records/codex/rollout-2026-10-28T00-59-00-01a18185-0399-7d91-ba81-a943b1e42e54.jsonl",
