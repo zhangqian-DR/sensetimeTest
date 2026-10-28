@@ -1,39 +1,39 @@
-...................FF.......F                                            [100%]
-================================== FAILURES ===================================
-____________ test_different_event_same_fact_is_reported_duplicate _____________
-tests\test_business.py:271: in test_different_event_same_fact_is_reported_duplicate
-    assert service.receive('user-a','TXN',replay)['result']=='DUPLICATE'
-E   AssertionError: assert 'APPLIED' == 'DUPLICATE'
-E     
-E     - DUPLICATE
-E     + APPLIED
-____________ test_scheduled_action_replay_after_date_is_idempotent ____________
-app\service.py:67: in _receive_locked
-    normalized = normalize(event_type,payload,now)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-app\services\events.py:63: in normalize
-    raise ValueError('remind_at must be in the future')
-E   ValueError: remind_at must be in the future
-
-The above exception was the direct cause of the following exception:
-tests\test_business.py:279: in test_scheduled_action_replay_after_date_is_idempotent
-    assert service.act('user-a',issue,payload)['result']=='DUPLICATE'
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-app\service.py:158: in act
-    return self._receive_locked(user_id,'USER_ACTION',{**payload,'issue_id':issue_id})
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-app\service.py:73: in _receive_locked
-    raise DomainError(422,str(error)) from error
-E   app.service.DomainError: remind_at must be in the future
-_______ test_business_conflicting_arrival_does_not_create_empty_refund ________
-tests\test_business.py:354: in test_business_conflicting_arrival_does_not_create_empty_refund
-    assert len(service.list_refunds('user-a'))==1
-E   AssertionError: assert 2 == 1
-E    +  where 2 = len([{'id': '74f4020c-c1ba-4dcf-8f1f-5e9d639dc1a2', 'user_id': 'user-a', 'refund_no': 'other', 'tx_no': None, ...}, {'id': 'ce9eb02d-b996-4184-a79e-a07746f8d6f3', 'user_id': 'user-a', 'refund_no': 'r', 'tx_no': None, ...}])
-E    +    where [{'id': '74f4020c-c1ba-4dcf-8f1f-5e9d639dc1a2', 'user_id': 'user-a', 'refund_no': 'other', 'tx_no': None, ...}, {'id': 'ce9eb02d-b996-4184-a79e-a07746f8d6f3', 'user_id': 'user-a', 'refund_no': 'r', 'tx_no': None, ...}] = list_refunds('user-a')
-E    +      where list_refunds = <app.service.BillingService object at 0x000001F8B0723F50>.list_refunds
-=========================== short test summary info ===========================
-FAILED tests/test_business.py::test_different_event_same_fact_is_reported_duplicate
-FAILED tests/test_business.py::test_scheduled_action_replay_after_date_is_idempotent
-FAILED tests/test_business.py::test_business_conflicting_arrival_does_not_create_empty_refund
-3 failed, 26 passed in 7.41s
+...................FF.......F                                            [100%]
+================================== FAILURES ===================================
+____________ test_different_event_same_fact_is_reported_duplicate _____________
+tests\test_business.py:271: in test_different_event_same_fact_is_reported_duplicate
+    assert service.receive('user-a','TXN',replay)['result']=='DUPLICATE'
+E   AssertionError: assert 'APPLIED' == 'DUPLICATE'
+E
+E     - DUPLICATE
+E     + APPLIED
+____________ test_scheduled_action_replay_after_date_is_idempotent ____________
+app\service.py:67: in _receive_locked
+    normalized = normalize(event_type,payload,now)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\services\events.py:63: in normalize
+    raise ValueError('remind_at must be in the future')
+E   ValueError: remind_at must be in the future
+
+The above exception was the direct cause of the following exception:
+tests\test_business.py:279: in test_scheduled_action_replay_after_date_is_idempotent
+    assert service.act('user-a',issue,payload)['result']=='DUPLICATE'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\service.py:158: in act
+    return self._receive_locked(user_id,'USER_ACTION',{**payload,'issue_id':issue_id})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\service.py:73: in _receive_locked
+    raise DomainError(422,str(error)) from error
+E   app.service.DomainError: remind_at must be in the future
+_______ test_business_conflicting_arrival_does_not_create_empty_refund ________
+tests\test_business.py:354: in test_business_conflicting_arrival_does_not_create_empty_refund
+    assert len(service.list_refunds('user-a'))==1
+E   AssertionError: assert 2 == 1
+E    +  where 2 = len([{'id': '74f4020c-c1ba-4dcf-8f1f-5e9d639dc1a2', 'user_id': 'user-a', 'refund_no': 'other', 'tx_no': None, ...}, {'id': 'ce9eb02d-b996-4184-a79e-a07746f8d6f3', 'user_id': 'user-a', 'refund_no': 'r', 'tx_no': None, ...}])
+E    +    where [{'id': '74f4020c-c1ba-4dcf-8f1f-5e9d639dc1a2', 'user_id': 'user-a', 'refund_no': 'other', 'tx_no': None, ...}, {'id': 'ce9eb02d-b996-4184-a79e-a07746f8d6f3', 'user_id': 'user-a', 'refund_no': 'r', 'tx_no': None, ...}] = list_refunds('user-a')
+E    +      where list_refunds = <app.service.BillingService object at 0x000001F8B0723F50>.list_refunds
+=========================== short test summary info ===========================
+FAILED tests/test_business.py::test_different_event_same_fact_is_reported_duplicate
+FAILED tests/test_business.py::test_scheduled_action_replay_after_date_is_idempotent
+FAILED tests/test_business.py::test_business_conflicting_arrival_does_not_create_empty_refund
+3 failed, 26 passed in 7.41s

@@ -1,0 +1,160 @@
+
+=== 场景 1: 两笔相近交易形成一条疑似问题 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT transactions {"event_id": "c82c1a9ac4-txn-event-2", "tx_no": "c82c1a9ac4-txn-3", "merchant_id": "c82c1a9ac4-shop-1", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "72fdc605-3a77-44f3-a5cf-6696bde71b8f", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "c82c1a9ac4-txn-event-4", "tx_no": "c82c1a9ac4-txn-5", "merchant_id": "c82c1a9ac4-shop-1", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "a59a7cd3-0c91-481a-ab7b-79ef5c03f953", "result": "APPLIED", "received": true, "applied": true}
+  CHECK PASS: 同商户同额相差5分钟，两笔形成一条疑似问题
+  CHECK PASS: 原交易两笔均保留，并关联问题
+  CHECK PASS: 问题为待确认疑似重复，不是已证实错误
+RESULT 1: PASS — 所有实际断言通过
+
+=== 场景 2: 正常购买与交易/动作重放 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT transactions {"event_id": "3260eeb4f1-txn-event-7", "tx_no": "3260eeb4f1-txn-8", "merchant_id": "3260eeb4f1-shop-6", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "17f19ed0-2303-4a29-914b-852b1fc036ad", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "3260eeb4f1-txn-event-9", "tx_no": "3260eeb4f1-txn-10", "merchant_id": "3260eeb4f1-shop-6", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "8d41ee9a-d846-44f9-acda-9814e2086d67", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "3260eeb4f1-txn-event-7", "tx_no": "3260eeb4f1-txn-8", "merchant_id": "3260eeb4f1-shop-6", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "e8dd94b8-8e70-4d2d-a935-dfa533088bdd", "result": "DUPLICATE", "received": true, "applied": false}
+  INPUT transactions {"event_id": "3260eeb4f1-txn-event-9", "tx_no": "3260eeb4f1-txn-10", "merchant_id": "3260eeb4f1-shop-6", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "85214b0d-e0de-4761-9d03-f3f1f396d224", "result": "DUPLICATE", "received": true, "applied": false}
+  CHECK PASS: 正常购买结论在动作和交易重放后保留
+  CHECK PASS: 重放不重新发送提醒
+RESULT 2: PASS — 所有实际断言通过
+
+=== 场景 3: 三笔交易形成三个明确关联的交易对 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT transactions {"event_id": "7fd5b67377-txn-event-13", "tx_no": "7fd5b67377-txn-14", "merchant_id": "7fd5b67377-shop-12", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "47d2d799-5065-4003-ab77-9bac618833b6", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "7fd5b67377-txn-event-15", "tx_no": "7fd5b67377-txn-16", "merchant_id": "7fd5b67377-shop-12", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "cc62180d-2452-464b-a959-4ad851720380", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "7fd5b67377-txn-event-17", "tx_no": "7fd5b67377-txn-18", "merchant_id": "7fd5b67377-shop-12", "amount_fen": 3000, "occurred_at": "2026-10-28T13:09:00.000+08:00"}
+  OBSERVED {"receipt_id": "55085626-3e9d-4bab-b72c-a41cf4a1763f", "result": "APPLIED", "received": true, "applied": true}
+  CHECK PASS: 三笔两两满足，创建三个不同无序交易对
+  CHECK PASS: 每条问题通过共享交易明确关联另两条
+  CHECK PASS: 每条问题通过共享交易明确关联另两条
+  CHECK PASS: 每条问题通过共享交易明确关联另两条
+  INPUT transactions {"event_id": "7fd5b67377-txn-event-13", "tx_no": "7fd5b67377-txn-14", "merchant_id": "7fd5b67377-shop-12", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "38a39ee1-11bc-4e71-99f0-d4ba1dd8cd4a", "result": "DUPLICATE", "received": true, "applied": false}
+  INPUT transactions {"event_id": "7fd5b67377-txn-event-15", "tx_no": "7fd5b67377-txn-16", "merchant_id": "7fd5b67377-shop-12", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "e2f3ad96-b631-4d4d-b216-113a9c363d90", "result": "DUPLICATE", "received": true, "applied": false}
+  INPUT transactions {"event_id": "7fd5b67377-txn-event-17", "tx_no": "7fd5b67377-txn-18", "merchant_id": "7fd5b67377-shop-12", "amount_fen": 3000, "occurred_at": "2026-10-28T13:09:00.000+08:00"}
+  OBSERVED {"receipt_id": "4bbdc31d-ebea-4d71-8b99-56005e6ca902", "result": "DUPLICATE", "received": true, "applied": false}
+  CHECK PASS: 三笔重放不新增问题
+RESULT 3: PASS — 所有实际断言通过
+
+=== 场景 4: 退款逾期、分笔到账、去重及验证解决 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT refund-confirmations {"event_id": "ca50a33832-confirm-20", "refund_no": "ca50a33832-refund-19", "expected_amount_fen": 10000, "confirmed_at": "2026-10-28T14:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "0eb17822-b4a9-456e-acb5-d6aa9d4fc5c2", "result": "APPLIED", "received": true, "applied": true}
+  TIME 2026-10-28T14:00:00.000+08:00 -> 2026-10-31T14:00:00.000+08:00 (+72h)；由系统自动检查
+  CHECK PASS: 满72小时未足额到账，只创建一条退款逾期问题
+  INPUT refund-arrivals {"event_id": "ca50a33832-arrival-event-21", "refund_no": "ca50a33832-refund-19", "arrival_no": "ca50a33832-arrival-22", "amount_fen": 6000, "arrived_at": "2026-10-31T14:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "afa267bf-7d50-4c56-9ec1-90bb44ff7261", "result": "APPLIED", "received": true, "applied": true}
+  CHECK PASS: 应退100元、到账60元，仍差40元
+  INPUT refund-arrivals {"event_id": "ca50a33832-arrival-event-21", "refund_no": "ca50a33832-refund-19", "arrival_no": "ca50a33832-arrival-22", "amount_fen": 6000, "arrived_at": "2026-10-31T14:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "77754e20-5029-4db5-a05a-fe763a3d3b62", "result": "DUPLICATE", "received": true, "applied": false}
+  CHECK PASS: 重放60元到账不重复累计
+  INPUT refund-arrivals {"event_id": "ca50a33832-arrival-event-23", "refund_no": "ca50a33832-refund-19", "arrival_no": "ca50a33832-arrival-24", "amount_fen": 4000, "arrived_at": "2026-10-31T14:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "bfd0b7e5-b023-494c-96a0-7b2eb7846097", "result": "APPLIED", "received": true, "applied": true}
+  INPUT refund-arrivals {"event_id": "ca50a33832-arrival-event-23", "refund_no": "ca50a33832-refund-19", "arrival_no": "ca50a33832-arrival-24", "amount_fen": 4000, "arrived_at": "2026-10-31T14:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "3a8b94ec-ae44-4003-b541-0ae6df809104", "result": "DUPLICATE", "received": true, "applied": false}
+  CHECK PASS: 两笔到账合计100元，差额为0
+  CHECK PASS: 依据全额到账事实验证解决
+RESULT 4: PASS — 所有实际断言通过
+
+=== 场景 5: 全额到账先于申请送达，不发过时提醒 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT refund-arrivals {"event_id": "af9f1adfb2-arrival-event-26", "refund_no": "af9f1adfb2-refund-25", "arrival_no": "af9f1adfb2-arrival-27", "amount_fen": 10000, "arrived_at": "2026-10-28T14:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "7ca1ccd5-4f2f-4aa1-8754-e81b6b18ac61", "result": "APPLIED", "received": true, "applied": true}
+  INPUT refund-confirmations {"event_id": "af9f1adfb2-confirm-28", "refund_no": "af9f1adfb2-refund-25", "expected_amount_fen": 10000, "confirmed_at": "2026-10-25T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "6967b031-e2a4-49b4-900a-e5069a000b21", "result": "APPLIED", "received": true, "applied": true}
+  CHECK PASS: 到账先到、补申请后准确归集
+  CHECK PASS: 信息齐全已足额，不发送过时逾期消息
+RESULT 5: PASS — 所有实际断言通过
+
+=== 场景 6: 未回复按24/48小时最多追加两次 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT transactions {"event_id": "223f2c40dc-txn-event-30", "tx_no": "223f2c40dc-txn-31", "merchant_id": "223f2c40dc-shop-29", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "2e7abd4f-59db-4b80-825b-700cfe86f655", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "223f2c40dc-txn-event-32", "tx_no": "223f2c40dc-txn-33", "merchant_id": "223f2c40dc-shop-29", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "628723d7-5188-4548-a9e7-e6913ec9dd5a", "result": "APPLIED", "received": true, "applied": true}
+  CHECK PASS: 首次提醒不计追加次数
+  TIME 2026-10-28T14:00:00.000+08:00 -> 2026-10-29T13:00:00.000+08:00 (+23h)；由系统自动检查
+  CHECK PASS: 未满24小时不追加
+  TIME 2026-10-29T13:00:00.000+08:00 -> 2026-10-29T14:00:00.000+08:00 (+1h)；由系统自动检查
+  CHECK PASS: 满24小时第一次追加
+  TIME 2026-10-29T14:00:00.000+08:00 -> 2026-10-30T14:00:00.000+08:00 (+24h)；由系统自动检查
+  CHECK PASS: 满48小时第二次追加
+  TIME 2026-10-30T14:00:00.000+08:00 -> 2026-11-02T14:00:00.000+08:00 (+72h)；由系统自动检查
+  CHECK PASS: 此后不再催办，总共三条成功提醒
+RESULT 6: PASS — 所有实际断言通过
+
+=== 场景 7: 明天提醒保留计数并至少延后24小时 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT transactions {"event_id": "69439aa863-txn-event-35", "tx_no": "69439aa863-txn-36", "merchant_id": "69439aa863-shop-34", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "a41cd5a2-154d-4204-988b-a68a7ba60d51", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "69439aa863-txn-event-37", "tx_no": "69439aa863-txn-38", "merchant_id": "69439aa863-shop-34", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "2e3d8faa-64f1-477b-89f7-25a80f98d66c", "result": "APPLIED", "received": true, "applied": true}
+  TIME 2026-10-28T14:00:00.000+08:00 -> 2026-10-29T14:00:00.000+08:00 (+24h)；由系统自动检查
+  INPUT action {"event_id": "69439aa863-action-39", "action": "SNOOZE", "tomorrow": true}
+  OBSERVED {"receipt_id": "dce1d60b-aa63-4d55-b3d3-ffb80983337d", "result": "APPLIED", "received": true, "applied": true}
+  CHECK PASS: 延期不清零已有追加次数
+  CHECK PASS: 明天约定至少延后24小时
+  TIME 2026-10-29T14:00:00.000+08:00 -> 2026-10-30T13:00:00.000+08:00 (+23h)；由系统自动检查
+  CHECK PASS: 约定前不发送
+  TIME 2026-10-30T13:00:00.000+08:00 -> 2026-10-30T14:00:00.000+08:00 (+1h)；由系统自动检查
+  CHECK PASS: 约定到期发送一次
+  CHECK PASS: 用户约定不计自动追加且不重置
+RESULT 7: PASS — 所有实际断言通过
+
+=== 场景 8: 确认有问题仍待解决，停止无回复催办 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT transactions {"event_id": "9e01f2073f-txn-event-41", "tx_no": "9e01f2073f-txn-42", "merchant_id": "9e01f2073f-shop-40", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "60bb15d5-4a84-4435-89b3-e370927a2cb2", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "9e01f2073f-txn-event-43", "tx_no": "9e01f2073f-txn-44", "merchant_id": "9e01f2073f-shop-40", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "41c1dcb3-ab77-4f83-bd79-4918ade4a86b", "result": "APPLIED", "received": true, "applied": true}
+  INPUT action {"event_id": "9e01f2073f-action-45", "action": "CONFIRM_PROBLEM"}
+  OBSERVED {"receipt_id": "14d6858a-df82-4673-a82b-051f371e8480", "result": "APPLIED", "received": true, "applied": true}
+  TIME 2026-10-28T14:00:00.000+08:00 -> 2026-10-31T14:00:00.000+08:00 (+72h)；由系统自动检查
+  CHECK PASS: 确认有问题仍待解决，无成功结案依据
+  CHECK PASS: 不沿用无回复催办
+RESULT 8: PASS — 所有实际断言通过
+
+=== 场景 9: 关闭后到账只补事实，不重开不催办 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT refund-confirmations {"event_id": "d07b6fbff4-confirm-47", "refund_no": "d07b6fbff4-refund-46", "expected_amount_fen": 10000, "confirmed_at": "2026-10-28T14:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "f16c4e5d-8afb-4963-8b80-f128ed5a5a66", "result": "APPLIED", "received": true, "applied": true}
+  TIME 2026-10-28T14:00:00.000+08:00 -> 2026-10-31T14:00:00.000+08:00 (+72h)；由系统自动检查
+  CHECK PASS: 满72小时未足额到账，只创建一条退款逾期问题
+  INPUT action {"event_id": "d07b6fbff4-action-48", "action": "CLOSE"}
+  OBSERVED {"receipt_id": "46aed7ea-dac6-47f4-8cfa-e1185edc5120", "result": "APPLIED", "received": true, "applied": true}
+  INPUT refund-arrivals {"event_id": "d07b6fbff4-arrival-event-49", "refund_no": "d07b6fbff4-refund-46", "arrival_no": "d07b6fbff4-arrival-50", "amount_fen": 10000, "arrived_at": "2026-10-31T14:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "1d5258c9-7f26-4436-869f-ba88a35e267d", "result": "APPLIED", "received": true, "applied": true}
+  TIME 2026-10-31T14:00:00.000+08:00 -> 2026-11-02T14:00:00.000+08:00 (+48h)；由系统自动检查
+  CHECK PASS: 关闭结论保留，到账事实仍完整展示
+  CHECK PASS: 关闭后不继续发送
+RESULT 9: PASS — 所有实际断言通过
+
+=== 场景 10: 真实进程重启保留处理结论与提醒次数 ===
+  隔离：新的临时文件数据库和服务进程
+  INPUT transactions {"event_id": "62eb735e02-txn-event-52", "tx_no": "62eb735e02-txn-53", "merchant_id": "62eb735e02-shop-51", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "f6e971bb-1af6-4d32-92bd-4e12c55d1fd9", "result": "APPLIED", "received": true, "applied": true}
+  INPUT transactions {"event_id": "62eb735e02-txn-event-54", "tx_no": "62eb735e02-txn-55", "merchant_id": "62eb735e02-shop-51", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "6fd03d49-f7d6-4af3-8d38-ee63087f450d", "result": "APPLIED", "received": true, "applied": true}
+  TIME 2026-10-28T14:00:00.000+08:00 -> 2026-10-29T14:00:00.000+08:00 (+24h)；由系统自动检查
+  INPUT action {"event_id": "62eb735e02-action-56", "action": "CONFIRM_PROBLEM"}
+  OBSERVED {"receipt_id": "cc0dfd3e-8d0e-43dd-b21a-ecbfd2f3404f", "result": "APPLIED", "received": true, "applied": true}
+  RESTART 停止真实服务子进程，再以同一SQLite文件启动
+  CHECK PASS: 真实重启保留用户确认结论和追加次数
+  CHECK PASS: 真实重启保留模拟时钟与实际已发消息
+  INPUT transactions {"event_id": "62eb735e02-txn-event-52", "tx_no": "62eb735e02-txn-53", "merchant_id": "62eb735e02-shop-51", "amount_fen": 3000, "occurred_at": "2026-10-28T13:00:00.000+08:00"}
+  OBSERVED {"receipt_id": "821c2d22-c9fd-4154-b39a-384e874e210f", "result": "DUPLICATE", "received": true, "applied": false}
+  INPUT transactions {"event_id": "62eb735e02-txn-event-54", "tx_no": "62eb735e02-txn-55", "merchant_id": "62eb735e02-shop-51", "amount_fen": 3000, "occurred_at": "2026-10-28T13:05:00.000+08:00"}
+  OBSERVED {"receipt_id": "bd3be409-10fa-4403-8b34-1db8441a503a", "result": "DUPLICATE", "received": true, "applied": false}
+  CHECK PASS: 重启后重放不重新发送
+RESULT 10: PASS — 所有实际断言通过
+
+汇总: {"passed": 10, "failed": 0, "skipped": 0}

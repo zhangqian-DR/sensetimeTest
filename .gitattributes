@@ -1,0 +1,2 @@
+# Keep exported evidence hashes stable across Windows checkouts.
+docs/ai-records/codex/*.jsonl text eol=lf

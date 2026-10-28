@@ -1,0 +1,22 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_____________ test_all_ten_scenarios_through_managed_http_server ______________
+tests\test_demo.py:86: in test_all_ten_scenarios_through_managed_http_server
+    demo = load_demo()
+           ^^^^^^^^^^^
+tests\test_demo.py:11: in load_demo
+    return importlib.import_module('demo')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\zhangqian\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1324: in _find_and_load_unlocked
+    ???
+E   ModuleNotFoundError: No module named 'demo'
+=========================== short test summary info ===========================
+FAILED tests/test_demo.py::test_all_ten_scenarios_through_managed_http_server
+1 failed in 0.23s

@@ -1,0 +1,130 @@
+FFFFFFF                                                                  [100%]
+================================== FAILURES ===================================
+_______________ test_client_uses_separate_admin_and_user_tokens _______________
+tests\test_demo.py:15: in test_client_uses_separate_admin_and_user_tokens
+    demo = load_demo()
+           ^^^^^^^^^^^
+tests\test_demo.py:11: in load_demo
+    return importlib.import_module('demo')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\zhangqian\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1324: in _find_and_load_unlocked
+    ???
+E   ModuleNotFoundError: No module named 'demo'
+_______________ test_http_failure_is_failure_not_empty_success ________________
+tests\test_demo.py:29: in test_http_failure_is_failure_not_empty_success
+    demo = load_demo()
+           ^^^^^^^^^^^
+tests\test_demo.py:11: in load_demo
+    return importlib.import_module('demo')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\zhangqian\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1324: in _find_and_load_unlocked
+    ???
+E   ModuleNotFoundError: No module named 'demo'
+____________ test_case_failure_is_reported_and_does_not_claim_pass ____________
+tests\test_demo.py:37: in test_case_failure_is_reported_and_does_not_claim_pass
+    demo = load_demo()
+           ^^^^^^^^^^^
+tests\test_demo.py:11: in load_demo
+    return importlib.import_module('demo')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\zhangqian\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1324: in _find_and_load_unlocked
+    ???
+E   ModuleNotFoundError: No module named 'demo'
+___________ test_external_server_restart_is_explicitly_not_verified ___________
+tests\test_demo.py:51: in test_external_server_restart_is_explicitly_not_verified
+    demo = load_demo()
+           ^^^^^^^^^^^
+tests\test_demo.py:11: in load_demo
+    return importlib.import_module('demo')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\zhangqian\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1324: in _find_and_load_unlocked
+    ???
+E   ModuleNotFoundError: No module named 'demo'
+_______ test_evidence_contains_assertions_and_no_authorization_secrets ________
+tests\test_demo.py:61: in test_evidence_contains_assertions_and_no_authorization_secrets
+    demo = load_demo()
+           ^^^^^^^^^^^
+tests\test_demo.py:11: in load_demo
+    return importlib.import_module('demo')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\zhangqian\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1324: in _find_and_load_unlocked
+    ???
+E   ModuleNotFoundError: No module named 'demo'
+_________ test_parse_cli_supports_managed_restart_and_single_scenario _________
+tests\test_demo.py:72: in test_parse_cli_supports_managed_restart_and_single_scenario
+    demo = load_demo()
+           ^^^^^^^^^^^
+tests\test_demo.py:11: in load_demo
+    return importlib.import_module('demo')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\zhangqian\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1324: in _find_and_load_unlocked
+    ???
+E   ModuleNotFoundError: No module named 'demo'
+______________ test_managed_server_rejects_non_local_bind_target ______________
+tests\test_demo.py:80: in test_managed_server_rejects_non_local_bind_target
+    demo = load_demo()
+           ^^^^^^^^^^^
+tests\test_demo.py:11: in load_demo
+    return importlib.import_module('demo')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\zhangqian\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1324: in _find_and_load_unlocked
+    ???
+E   ModuleNotFoundError: No module named 'demo'
+=========================== short test summary info ===========================
+FAILED tests/test_demo.py::test_client_uses_separate_admin_and_user_tokens - ...
+FAILED tests/test_demo.py::test_http_failure_is_failure_not_empty_success - M...
+FAILED tests/test_demo.py::test_case_failure_is_reported_and_does_not_claim_pass
+FAILED tests/test_demo.py::test_external_server_restart_is_explicitly_not_verified
+FAILED tests/test_demo.py::test_evidence_contains_assertions_and_no_authorization_secrets
+FAILED tests/test_demo.py::test_parse_cli_supports_managed_restart_and_single_scenario
+FAILED tests/test_demo.py::test_managed_server_rejects_non_local_bind_target
+7 failed in 0.25s

@@ -1,0 +1,165 @@
+{
+  "snapshot_utc": "2026-10-28T08:50:05.100994+00:00",
+  "scope": "Only this workspace sessions and supplied Doubao bill-task artifacts",
+  "format": "Visible original event objects with source line references; email/key redaction; hidden reasoning and system/developer context excluded",
+  "sessions": [
+    {
+      "file": "docs/ai-records/codex/rollout-2026-10-27T23-21-23-01a1812b-a623-7710-a6f2-1baa09287a39.jsonl",
+      "session_id": "01a1812b-a623-7710-a6f2-1baa09287a39",
+      "role": "main",
+      "source_lines": 1119,
+      "exported_records": 284,
+      "omitted_categories": {
+        "session_meta:metadata": 1,
+        "event_msg:task_started": 30,
+        "response_item:additional_tools": 1,
+        "response_item:message": 9,
+        "world_state:metadata": 11,
+        "turn_context:metadata": 30,
+        "event_msg:thread_settings_applied": 30,
+        "event_msg:item_completed": 273,
+        "token_usage_record:metadata": 125,
+        "event_msg:token_count": 144,
+        "event_msg:task_complete": 29,
+        "response_item:reasoning": 86,
+        "inter_agent_communication_metadata:metadata": 33,
+        "response_item:agent_message": 33
+      },
+      "sha256": "275ee37fc77b01ba69465f58bfbc11ad0fc72977265235f02229c4ca91ad52a3"
+    },
+    {
+      "file": "docs/ai-records/codex/rollout-2026-10-28T00-59-00-01a18185-0399-7d91-ba81-a943b1e42e54.jsonl",
+      "session_id": "01a18185-0399-7d91-ba81-a943b1e42e54",
+      "role": "/root/foundation",
+      "source_lines": 420,
+      "exported_records": 185,
+      "omitted_categories": {
+        "session_meta:metadata": 2,
+        "event_msg:task_started": 32,
+        "response_item:additional_tools": 2,
+        "response_item:message": 11,
+        "world_state:metadata": 5,
+        "turn_context:metadata": 32,
+        "event_msg:task_complete": 31,
+        "response_item:reasoning": 39,
+        "event_msg:turn_aborted": 1,
+        "event_msg:thread_settings_applied": 1,
+        "inter_agent_communication_metadata:metadata": 2,
+        "response_item:agent_message": 2,
+        "token_usage_record:metadata": 20,
+        "event_msg:item_completed": 35,
+        "event_msg:token_count": 20
+      },
+      "sha256": "5f52a23777a47131bc815a591101e55a7a0b059de48842a05d47d20a53aed8f7"
+    },
+    {
+      "file": "docs/ai-records/codex/rollout-2026-10-28T00-59-24-01a18185-62c4-7b33-8e76-6f5af5edaa28.jsonl",
+      "session_id": "01a18185-62c4-7b33-8e76-6f5af5edaa28",
+      "role": "/root/api",
+      "source_lines": 735,
+      "exported_records": 278,
+      "omitted_categories": {
+        "session_meta:metadata": 2,
+        "event_msg:task_started": 33,
+        "response_item:additional_tools": 2,
+        "response_item:message": 13,
+        "world_state:metadata": 8,
+        "turn_context:metadata": 33,
+        "event_msg:task_complete": 32,
+        "response_item:reasoning": 77,
+        "event_msg:turn_aborted": 1,
+        "event_msg:thread_settings_applied": 1,
+        "inter_agent_communication_metadata:metadata": 6,
+        "response_item:agent_message": 6,
+        "token_usage_record:metadata": 66,
+        "event_msg:item_completed": 110,
+        "event_msg:token_count": 67
+      },
+      "sha256": "4a404f20f27ceb58c06966c444ddea67c1d533f32c464dbf86f06a2daa95decd"
+    },
+    {
+      "file": "docs/ai-records/codex/rollout-2026-10-28T01-01-47-01a18187-905f-7550-a3ed-c5caf7429ace.jsonl",
+      "session_id": "01a18187-905f-7550-a3ed-c5caf7429ace",
+      "role": "/root/demo_docs",
+      "source_lines": 345,
+      "exported_records": 170,
+      "omitted_categories": {
+        "session_meta:metadata": 2,
+        "event_msg:task_started": 31,
+        "response_item:additional_tools": 2,
+        "response_item:message": 10,
+        "world_state:metadata": 6,
+        "turn_context:metadata": 31,
+        "event_msg:task_complete": 30,
+        "response_item:reasoning": 31,
+        "response_item:agent_message": 6,
+        "event_msg:turn_aborted": 1,
+        "event_msg:thread_settings_applied": 1,
+        "inter_agent_communication_metadata:metadata": 3,
+        "event_msg:item_completed": 8,
+        "token_usage_record:metadata": 6,
+        "event_msg:token_count": 7
+      },
+      "sha256": "b00ea453f6c73eb24ef14754c106200850b33ceccf4f7744705170e2b4c8934d"
+    },
+    {
+      "file": "docs/ai-records/codex/rollout-2026-10-28T01-24-53-01a1819c-b616-75a0-ba82-080ccfcb703e.jsonl",
+      "session_id": "01a1819c-b616-75a0-ba82-080ccfcb703e",
+      "role": "/root/final_review",
+      "source_lines": 97,
+      "exported_records": 27,
+      "omitted_categories": {
+        "session_meta:metadata": 1,
+        "event_msg:task_started": 2,
+        "response_item:additional_tools": 1,
+        "response_item:message": 4,
+        "world_state:metadata": 1,
+        "turn_context:metadata": 2,
+        "event_msg:thread_settings_applied": 1,
+        "inter_agent_communication_metadata:metadata": 2,
+        "response_item:agent_message": 2,
+        "token_usage_record:metadata": 14,
+        "event_msg:item_completed": 19,
+        "event_msg:token_count": 14,
+        "response_item:reasoning": 5,
+        "event_msg:task_complete": 2
+      },
+      "sha256": "09fbf20ee16f1a4015fe774bd39124b7568e25af347f0f98df43ff066f8aba4b"
+    }
+  ],
+  "doubao_artifacts": [
+    {
+      "file": "docs/ai-records/doubao/Codex实施清单-Review意见.md",
+      "sha256": "f11d4e1d230de4c1de7183afea170076a5b9950381bc30da533bea051778be45"
+    },
+    {
+      "file": "docs/ai-records/doubao/Codex第二轮方案-Review意见.md",
+      "sha256": "35fbd1c526e594408508b3327b558fda7df446bb5499921ae116df13e4e0e4ed"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单执行计划-分析意见.md",
+      "sha256": "81ed85112fb5d23a6dd9b29856c6fac8185c112a1969fa5edefefabbe1dc0c76"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单设计-Review意见.md",
+      "sha256": "ba16f572f2136dad282ee7395c40b3dcbe46c9b85411d375b476e064e8d73fe3"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单设计-第二轮Review意见.md",
+      "sha256": "dec3ebfd07994a720ad21c1e9dcf1f5cf1262762a2e20093752821d6e6088303"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单跟进系统-项目分析与概览.md",
+      "sha256": "4360cacd8088393b936c10073ec29c247da184ef14da5b37c29512c3b56aa790"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单跟进系统-题目分析(发Codex).md",
+      "sha256": "6a90b9455aac9fc1c5199f71aae269a08c8a744b092b4d7b3fe85222951a2289"
+    }
+  ],
+  "missing": [
+    "Records after snapshot are not included until refreshed.",
+    "Unavailable/truncated tool outputs cannot be recovered."
+  ],
+  "doubao_chat_responsibility": "User will organize and supply the Doubao chat separately; existing markdown files are reference materials only."
+}

@@ -1,0 +1,230 @@
+{
+  "passed": 10,
+  "failed": 0,
+  "skipped": 0,
+  "results": [
+    {
+      "scenario": 1,
+      "name": "两笔相近交易形成一条疑似问题",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "同商户同额相差5分钟，两笔形成一条疑似问题",
+          "passed": true
+        },
+        {
+          "assertion": "原交易两笔均保留，并关联问题",
+          "passed": true
+        },
+        {
+          "assertion": "问题为待确认疑似重复，不是已证实错误",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 2,
+      "name": "正常购买与交易/动作重放",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "正常购买结论在动作和交易重放后保留",
+          "passed": true
+        },
+        {
+          "assertion": "重放不重新发送提醒",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 3,
+      "name": "三笔交易形成三个明确关联的交易对",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "三笔两两满足，创建三个不同无序交易对",
+          "passed": true
+        },
+        {
+          "assertion": "每条问题通过共享交易明确关联另两条",
+          "passed": true
+        },
+        {
+          "assertion": "每条问题通过共享交易明确关联另两条",
+          "passed": true
+        },
+        {
+          "assertion": "每条问题通过共享交易明确关联另两条",
+          "passed": true
+        },
+        {
+          "assertion": "三笔重放不新增问题",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 4,
+      "name": "退款逾期、分笔到账、去重及验证解决",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "满72小时未足额到账，只创建一条退款逾期问题",
+          "passed": true
+        },
+        {
+          "assertion": "应退100元、到账60元，仍差40元",
+          "passed": true
+        },
+        {
+          "assertion": "重放60元到账不重复累计",
+          "passed": true
+        },
+        {
+          "assertion": "两笔到账合计100元，差额为0",
+          "passed": true
+        },
+        {
+          "assertion": "依据全额到账事实验证解决",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 5,
+      "name": "全额到账先于申请送达，不发过时提醒",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "到账先到、补申请后准确归集",
+          "passed": true
+        },
+        {
+          "assertion": "信息齐全已足额，不发送过时逾期消息",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 6,
+      "name": "未回复按24/48小时最多追加两次",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "首次提醒不计追加次数",
+          "passed": true
+        },
+        {
+          "assertion": "未满24小时不追加",
+          "passed": true
+        },
+        {
+          "assertion": "满24小时第一次追加",
+          "passed": true
+        },
+        {
+          "assertion": "满48小时第二次追加",
+          "passed": true
+        },
+        {
+          "assertion": "此后不再催办，总共三条成功提醒",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 7,
+      "name": "明天提醒保留计数并至少延后24小时",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "延期不清零已有追加次数",
+          "passed": true
+        },
+        {
+          "assertion": "明天约定至少延后24小时",
+          "passed": true
+        },
+        {
+          "assertion": "约定前不发送",
+          "passed": true
+        },
+        {
+          "assertion": "约定到期发送一次",
+          "passed": true
+        },
+        {
+          "assertion": "用户约定不计自动追加且不重置",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 8,
+      "name": "确认有问题仍待解决，停止无回复催办",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "确认有问题仍待解决，无成功结案依据",
+          "passed": true
+        },
+        {
+          "assertion": "不沿用无回复催办",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 9,
+      "name": "关闭后到账只补事实，不重开不催办",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "满72小时未足额到账，只创建一条退款逾期问题",
+          "passed": true
+        },
+        {
+          "assertion": "关闭结论保留，到账事实仍完整展示",
+          "passed": true
+        },
+        {
+          "assertion": "关闭后不继续发送",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": 10,
+      "name": "真实进程重启保留处理结论与提醒次数",
+      "status": "PASS",
+      "detail": "所有实际断言通过",
+      "checks": [
+        {
+          "assertion": "真实重启保留用户确认结论和追加次数",
+          "passed": true
+        },
+        {
+          "assertion": "真实重启保留模拟时钟与实际已发消息",
+          "passed": true
+        },
+        {
+          "assertion": "重启后重放不重新发送",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "evidence": "reports\\demo_output.txt",
+  "managed_server": true,
+  "database_directory": "C:\\Users\\zhangqian\\AppData\\Local\\Temp\\bill-followup-demo-nj61o_y0"
+}
