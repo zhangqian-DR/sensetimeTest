@@ -1,0 +1,12 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_repeat_close_preserves_confirmed_conclusion_on_reopen __________
+tests\test_business.py:378: in test_repeat_close_preserves_confirmed_conclusion_on_reopen
+    assert result['status']=='CONFIRMED_PROBLEM'
+E   AssertionError: assert 'OPEN' == 'CONFIRMED_PROBLEM'
+E     
+E     - CONFIRMED_PROBLEM
+E     + OPEN
+=========================== short test summary info ===========================
+FAILED tests/test_business.py::test_repeat_close_preserves_confirmed_conclusion_on_reopen
+1 failed, 31 deselected in 0.91s

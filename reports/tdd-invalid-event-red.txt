@@ -1,0 +1,128 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+________ test_invalid_event_id_is_retained_before_validation[bad_id0] _________
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1958: in _exec_single_context
+    self.dialect.do_execute(
+.venv\Lib\site-packages\sqlalchemy\engine\default.py:1192: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.ProgrammingError: Error binding parameter 3: type 'dict' is not supported
+
+The above exception was the direct cause of the following exception:
+tests\test_business.py:362: in test_invalid_event_id_is_retained_before_validation
+    service.receive('user-a','TXN',tx('bad',event_id=bad_id))
+app\service.py:60: in receive
+    return self._receive_locked(user_id, event_type, payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\service.py:64: in _receive_locked
+    receipt_id = self._record(user,event_type,payload)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\service.py:55: in _record
+    session.flush()
+.venv\Lib\site-packages\sqlalchemy\orm\session.py:4543: in flush
+    self._flush(objects)
+<sqlalchemy generated warned() wrapper for sqlalchemy.orm.session.Session._flush>:2: in _flush
+    return target(fn, self, objects=objects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\util\deprecations.py:281: in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\session.py:4686: in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:166: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv\Lib\site-packages\sqlalchemy\orm\session.py:4647: in _flush
+    flush_context.execute()
+.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py:467: in execute
+    rec.execute(self)
+.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py:643: in execute
+    util.preloaded.orm_persistence._save_obj(
+.venv\Lib\site-packages\sqlalchemy\orm\persistence.py:92: in _save_obj
+    _emit_insert_statements(
+.venv\Lib\site-packages\sqlalchemy\orm\persistence.py:1237: in _emit_insert_statements
+    result = connection.execute(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1463: in execute
+    return meth(
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:533: in _execute_on_connection
+    return connection._execute_clauseelement(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1683: in _execute_clauseelement
+    ret = self._execute_context(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1837: in _execute_context
+    return self._exec_single_context(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1977: in _exec_single_context
+    self._handle_dbapi_exception(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:2347: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1958: in _exec_single_context
+    self.dialect.do_execute(
+.venv\Lib\site-packages\sqlalchemy\engine\default.py:1192: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.ProgrammingError: (sqlite3.ProgrammingError) Error binding parameter 3: type 'dict' is not supported
+E   [SQL: INSERT INTO event_receipts (id, user_id, event_id, event_type, source, payload_json, payload_hash, occurred_at, received_at, trace_id, is_canonical, canonical_receipt_id, processing_state, applied_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E   [parameters: ('1895c819-d76e-4637-ab1f-348f1d2142b7', 'user-a', {'not': 'a-string'}, 'TXN', 'API', '{"amount_fen":3000,"event_id":{"not":"a-string"},"merchant_id":"shop","occurred_at":"2026-10-27T23:00:00-07:00","tx_no":"bad"}', '7900c5575601bef9f2a751d6484d8fc79d46a38b00a8b5a800c31e89b10e55ac', None, 1793167200000, '999c4c13-0f0b-4518-8e7f-bcc241a60515', 0, None, 'RECEIVED', None)]
+E   (Background on this error at: https://sqlalche.me/e/21/f405)
+________ test_invalid_event_id_is_retained_before_validation[bad_id1] _________
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1958: in _exec_single_context
+    self.dialect.do_execute(
+.venv\Lib\site-packages\sqlalchemy\engine\default.py:1192: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.ProgrammingError: Error binding parameter 3: type 'list' is not supported
+
+The above exception was the direct cause of the following exception:
+tests\test_business.py:362: in test_invalid_event_id_is_retained_before_validation
+    service.receive('user-a','TXN',tx('bad',event_id=bad_id))
+app\service.py:60: in receive
+    return self._receive_locked(user_id, event_type, payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\service.py:64: in _receive_locked
+    receipt_id = self._record(user,event_type,payload)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\service.py:55: in _record
+    session.flush()
+.venv\Lib\site-packages\sqlalchemy\orm\session.py:4543: in flush
+    self._flush(objects)
+<sqlalchemy generated warned() wrapper for sqlalchemy.orm.session.Session._flush>:2: in _flush
+    return target(fn, self, objects=objects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\util\deprecations.py:281: in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\session.py:4686: in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:166: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv\Lib\site-packages\sqlalchemy\orm\session.py:4647: in _flush
+    flush_context.execute()
+.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py:467: in execute
+    rec.execute(self)
+.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py:643: in execute
+    util.preloaded.orm_persistence._save_obj(
+.venv\Lib\site-packages\sqlalchemy\orm\persistence.py:92: in _save_obj
+    _emit_insert_statements(
+.venv\Lib\site-packages\sqlalchemy\orm\persistence.py:1237: in _emit_insert_statements
+    result = connection.execute(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1463: in execute
+    return meth(
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:533: in _execute_on_connection
+    return connection._execute_clauseelement(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1683: in _execute_clauseelement
+    ret = self._execute_context(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1837: in _execute_context
+    return self._exec_single_context(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1977: in _exec_single_context
+    self._handle_dbapi_exception(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:2347: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1958: in _exec_single_context
+    self.dialect.do_execute(
+.venv\Lib\site-packages\sqlalchemy\engine\default.py:1192: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.ProgrammingError: (sqlite3.ProgrammingError) Error binding parameter 3: type 'list' is not supported
+E   [SQL: INSERT INTO event_receipts (id, user_id, event_id, event_type, source, payload_json, payload_hash, occurred_at, received_at, trace_id, is_canonical, canonical_receipt_id, processing_state, applied_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E   [parameters: ('c5816cd0-26b7-4bdd-8a6d-56e6418cc860', 'user-a', ['not-a-string'], 'TXN', 'API', '{"amount_fen":3000,"event_id":["not-a-string"],"merchant_id":"shop","occurred_at":"2026-10-27T23:00:00-07:00","tx_no":"bad"}', '1ea09972414d967fa2d186157c6440206f2ae3c5c078f266bdbfc06bc875fbfd', None, 1793167200000, '0f614e20-de5e-4a1b-8d8c-058460b95b7d', 0, None, 'RECEIVED', None)]
+E   (Background on this error at: https://sqlalche.me/e/21/f405)
+=========================== short test summary info ===========================
+FAILED tests/test_business.py::test_invalid_event_id_is_retained_before_validation[bad_id0]
+FAILED tests/test_business.py::test_invalid_event_id_is_retained_before_validation[bad_id1]
+2 failed, 29 deselected in 1.43s

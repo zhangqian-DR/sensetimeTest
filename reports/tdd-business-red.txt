@@ -1,0 +1,175 @@
+EEEEEEEEEEEEEEEEEEE                                                      [100%]
+=================================== ERRORS ====================================
+________________ ERROR at setup of test_pair_and_normal_replay ________________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+_______ ERROR at setup of test_pairs_boundary_and_relation[minutes0-3] ________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+_______ ERROR at setup of test_pairs_boundary_and_relation[minutes1-2] ________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+_______ ERROR at setup of test_pairs_boundary_and_relation[minutes2-1] ________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+_______ ERROR at setup of test_pairs_boundary_and_relation[minutes3-0] ________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+___________ ERROR at setup of test_user_isolation_and_same_numbers ____________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+____________ ERROR at setup of test_refund_partial_full_and_replay ____________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+_____ ERROR at setup of test_arrival_before_confirmation_no_stale_message _____
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+__________________ ERROR at setup of test_only_two_followups __________________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+___________ ERROR at setup of test_snooze_and_explicit_after_quota ____________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+__________ ERROR at setup of test_confirm_problem_is_not_resolution ___________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+______________ ERROR at setup of test_closed_refund_keeps_facts _______________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+________ ERROR at setup of test_pause_preserves_inputs_and_no_catchup _________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+_______ ERROR at setup of test_pause_refund_latest_fact_before_evaluate _______
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+__ ERROR at setup of test_unknown_reconciles_once_and_close_does_not_retract __
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+____________ ERROR at setup of test_failed_not_counted_or_retried _____________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+___________ ERROR at setup of test_conflicts_logged_not_overwritten ___________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+_______________ ERROR at setup of test_restart_preserves_state ________________
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+___ ERROR at setup of test_snooze_missing_time_and_negative_amount_retained ___
+tests\test_business.py:38: in service
+    assert importlib.util.find_spec('app.service'), 'BillingService not implemented'
+E   AssertionError: BillingService not implemented
+E   assert None
+E    +  where None = <function find_spec at 0x000001EC065DFB00>('app.service')
+E    +    where <function find_spec at 0x000001EC065DFB00> = <module 'importlib.util' (frozen)>.find_spec
+E    +      where <module 'importlib.util' (frozen)> = importlib.util
+=========================== short test summary info ===========================
+ERROR tests/test_business.py::test_pair_and_normal_replay - AssertionError: B...
+ERROR tests/test_business.py::test_pairs_boundary_and_relation[minutes0-3] - ...
+ERROR tests/test_business.py::test_pairs_boundary_and_relation[minutes1-2] - ...
+ERROR tests/test_business.py::test_pairs_boundary_and_relation[minutes2-1] - ...
+ERROR tests/test_business.py::test_pairs_boundary_and_relation[minutes3-0] - ...
+ERROR tests/test_business.py::test_user_isolation_and_same_numbers - Assertio...
+ERROR tests/test_business.py::test_refund_partial_full_and_replay - Assertion...
+ERROR tests/test_business.py::test_arrival_before_confirmation_no_stale_message
+ERROR tests/test_business.py::test_only_two_followups - AssertionError: Billi...
+ERROR tests/test_business.py::test_snooze_and_explicit_after_quota - Assertio...
+ERROR tests/test_business.py::test_confirm_problem_is_not_resolution - Assert...
+ERROR tests/test_business.py::test_closed_refund_keeps_facts - AssertionError...
+ERROR tests/test_business.py::test_pause_preserves_inputs_and_no_catchup - As...
+ERROR tests/test_business.py::test_pause_refund_latest_fact_before_evaluate
+ERROR tests/test_business.py::test_unknown_reconciles_once_and_close_does_not_retract
+ERROR tests/test_business.py::test_failed_not_counted_or_retried - AssertionE...
+ERROR tests/test_business.py::test_conflicts_logged_not_overwritten - Asserti...
+ERROR tests/test_business.py::test_restart_preserves_state - AssertionError: ...
+ERROR tests/test_business.py::test_snooze_missing_time_and_negative_amount_retained
+19 errors in 0.37s
