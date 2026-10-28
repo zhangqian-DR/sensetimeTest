@@ -1,43 +1,51 @@
-"""应用配置：启动时从环境变量读取，修改后重启生效（不在运行中切换）。
-
-对应 Codex 设计的双时间模式：
-- real：使用真实北京时间，禁止虚拟时间推进接口；
-- simulated：通过 Swagger 推进虚拟时间，推进后自动检查，禁止倒退。
-两种模式默认使用不同数据库，避免演示数据污染。
-"""
+"""Validated startup configuration. Test credentials are for local simulation only."""
+import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 
-def _env(name: str, default: str) -> str:
-    return os.environ.get(name, default)
-
-
-@dataclass
+@dataclass(frozen=True)
 class Settings:
-    time_mode: str                 # real / simulated
-    timezone: str                  # 如 Asia/Shanghai
-    check_interval_seconds: int    # 自动检查间隔（生产调度用，测试不依赖）
-    simulated_start: str           # 模拟起始时间（仅首次初始化使用）
-    db_path: str                   # SQLite 文件路径
+    time_mode: str = 'simulated'
+    timezone: str = 'Asia/Shanghai'
+    check_interval_seconds: float = 1
+    simulated_start: str = '2026-10-28T14:00:00+08:00'
+    db_path: str = './data/simulated.db'
+    test_tokens: dict = field(default_factory=lambda: {'demo-token-a': 'user-a', 'demo-token-b': 'user-b'})
+    demo_admin_token: str = 'local-demo-admin-only'
+    enable_demo_controls: bool = True
 
     @property
-    def tz(self) -> ZoneInfo:
+    def tz(self):
         return ZoneInfo(self.timezone)
 
 
-def load_settings() -> Settings:
-    mode = _env("APP_TIME_MODE", "simulated").strip().lower()
-    if mode not in ("real", "simulated"):
-        mode = "simulated"
-    timezone = _env("APP_TIMEZONE", "Asia/Shanghai")
-    interval = int(_env("APP_CHECK_INTERVAL_SECONDS", "60"))
-    simulated_start = _env("APP_SIMULATED_START", "2026-10-28T14:00:00+08:00")
-    # 两种模式默认不同数据库，避免演示数据污染
-    default_db = "./data/simulated.db" if mode == "simulated" else "./data/real.db"
-    db_path = _env("APP_DB_PATH", default_db)
-    return Settings(mode, timezone, interval, simulated_start, db_path)
-
-
-settings = load_settings()
+def load_settings(environ=None):
+    env = os.environ if environ is None else environ
+    mode = env.get('APP_TIME_MODE', 'simulated').strip().lower()
+    if mode not in ('real', 'simulated'):
+        raise ValueError('APP_TIME_MODE must be real or simulated')
+    zone = env.get('APP_TIMEZONE', 'Asia/Shanghai')
+    if zone != 'Asia/Shanghai':
+        raise ValueError('APP_TIMEZONE must be Asia/Shanghai')
+    ZoneInfo(zone)
+    interval = float(env.get('APP_CHECK_INTERVAL_SECONDS', '1'))
+    import math
+    if not math.isfinite(interval) or interval <= 0:
+        raise ValueError('APP_CHECK_INTERVAL_SECONDS must be positive and finite')
+    start = env.get('APP_SIMULATED_START', '2026-10-28T14:00:00+08:00')
+    parsed = datetime.fromisoformat(start)
+    if 'T' not in start or parsed.tzinfo is None or parsed.utcoffset() is None or parsed.microsecond % 1000:
+        raise ValueError('APP_SIMULATED_START needs date, time, timezone and millisecond precision')
+    tokens = json.loads(env.get('APP_TEST_TOKENS_JSON', '{"demo-token-a":"user-a","demo-token-b":"user-b"}'))
+    if not isinstance(tokens, dict) or not tokens or any(not isinstance(k, str) or not k or not isinstance(v, str) or not v for k, v in tokens.items()):
+        raise ValueError('APP_TEST_TOKENS_JSON must map nonempty tokens to users')
+    admin = env.get('APP_DEMO_ADMIN_TOKEN', 'local-demo-admin-only')
+    if not admin or admin in tokens:
+        raise ValueError('Demo admin token must be nonempty and distinct from user tokens')
+    controls = env.get('APP_ENABLE_DEMO_CONTROLS', 'true').lower()
+    if controls not in ('true', 'false'):
+        raise ValueError('APP_ENABLE_DEMO_CONTROLS must be true or false')
+    return Settings(mode, zone, interval, start, env.get('APP_DB_PATH', './data/' + mode + '.db'), tokens, admin, controls == 'true')
