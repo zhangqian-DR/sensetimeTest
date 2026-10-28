@@ -8,6 +8,8 @@
 
 Swagger逐步手工验收：[操作步骤、请求JSON与预期结果](docs/swagger-acceptance.md)。
 
+交付材料及最短验收入口：[SUBMISSION.md](SUBMISSION.md)。
+
 ## 1. 干净环境安装
 
 要求Python 3.12、可访问Python包源的安装环境，不需要额外付费服务。Windows PowerShell从仓库根目录运行：
@@ -203,7 +205,7 @@ $env:APP_DB_PATH = './data/real.db'
 
 ## 6. 复用、AI协作与限制
 
-复用现有项目的基础目录和早期config/clock/database/models骨架；按已确认设计改造模型和业务。FastAPI、SQLAlchemy、Uvicorn、pytest、httpx、tzdata为现有免费组件；未复用真实支付或银行组件。新增业务规则、TDD测试、接口、后台调度、模拟通知、演示及材料属于本题改动，可由Git提交查看。
+复用现有项目的基础目录和早期config/clock/database/models骨架；按已确认设计改造模型和业务。FastAPI、SQLAlchemy、Uvicorn、pytest、httpx、tzdata为现有免费组件；未复用真实支付或银行组件。新增业务规则、TDD测试、接口、后台调度、模拟通知、演示及材料属于本题改动，可由Git提交查看。逐模块的复用/改动清单、提交历史与测试数据说明见 [`CHANGELOG.md`](CHANGELOG.md)。
 
 AI协作记录与人工贡献索引见`docs/ai-records/`。应交可取得的原始会话和工具结果，不以本README或总结替代；缺失范围如实说明，不提供隐藏推理或无关私人会话。
 

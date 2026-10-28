@@ -137,6 +137,18 @@
       "sha256": "35fbd1c526e594408508b3327b558fda7df446bb5499921ae116df13e4e0e4ed"
     },
     {
+      "file": "docs/ai-records/doubao/README.md",
+      "sha256": "d5f914648cdf69e7509c83b1d166fc012cca51fae253a7c81062e518ff1c6f04"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单SNOOZE口径-细化(发Codex).md",
+      "sha256": "c755adce43667850a093473a2349a8b58c1bcc9a8ddbee42a97544b40c14de13"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单前端-检查结论.md",
+      "sha256": "ab2b771529073800f79d7c9baa70dbc939068e89a5317ae591d6932254859937"
+    },
+    {
       "file": "docs/ai-records/doubao/账单执行计划-分析意见.md",
       "sha256": "81ed85112fb5d23a6dd9b29856c6fac8185c112a1969fa5edefefabbe1dc0c76"
     },
@@ -155,6 +167,14 @@
     {
       "file": "docs/ai-records/doubao/账单跟进系统-题目分析(发Codex).md",
       "sha256": "6a90b9455aac9fc1c5199f71aae269a08c8a744b092b4d7b3fe85222951a2289"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单项目-代码Review结论.md",
+      "sha256": "f1fb22b14b6cdf621ccef74e42444f1fd4d1e4a9967b72d7854b5ebf50315fff"
+    },
+    {
+      "file": "docs/ai-records/doubao/账单项目-文档缺口核对.md",
+      "sha256": "1416c9157cf4146bcee55d220146a5344fd8b4338185582bd22c2756d2d9824d"
     }
   ],
   "missing": [

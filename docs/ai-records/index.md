@@ -15,7 +15,7 @@
 - `/root/foundation`：配置、12表、时钟及约束测试；只读review复现非法事件编号和重复关闭缺陷。
 - `/root/api`：Swagger、认证、后台、HTTP集成；接手demo和README，真实进程重启演示。
 - `/root/demo_docs`：先写demo测试，因模型容量错误中断；已有工作由API任务接手。错误保留，不宣称该任务完成。
-- 豆包：分析、设计/计划review，原文见doubao文件；完整会话缺失。
+- 豆包：需求分析、技术选型、设计/计划评审、代码与前端 Review、文档缺口及补文档；产物与索引见 `doubao/`（11 份 + README），完整会话由用户另行导出。
 
 原始工具结果可定位RED/GREEN：基础12项、核心首批19项、边界失败修复、API与demo；reports/tdd-*.txt为补充证据，不替代会话。最终数量以pytest实际输出为准。
 
