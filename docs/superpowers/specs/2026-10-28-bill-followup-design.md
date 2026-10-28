@@ -1,50 +1,74 @@
-# 账单问题持续跟进系统技术设计
+# 账单问题持续跟进系统技术设计（修订版 V0.2）
 
-- 日期：2026-10-28
-- 状态：待用户审阅的目标设计；本文不代表功能已实现或验收已通过。
-- 交付约束：北京时间14:00—18:00，最多4小时；到上限如实交付成果与缺口。
-- 技术：Python、FastAPI、SQLAlchemy、SQLite、pytest；Swagger作为第一版交互界面。
-- 范围：仅疑似重复消费、退款逾期；所有数据、身份、通知均为本地模拟，不操作真实账户。
+- 日期：2026-10-28；状态：目标设计，待审阅。本文不代表代码已实现或验收已通过。
+- 约束：北京时间14:00—18:00，最多4小时，到上限交当前成果及缺口。
+- 技术：Python、FastAPI、同步SQLAlchemy、SQLite、pytest；第一版Swagger操作，HTTP脚本重放演示；自定义前端后置。
+- 范围：疑似重复消费和退款逾期；用户、账目、外部通知全部模拟，不操作真实账户，不删除交易、不联系商户。
 
-## 1. 已确认的产品规则
+## 1. 本次修订与设计取舍
 
-1. 同用户、同商户、同金额、不同交易编号且时间差≤10分钟，每个无序交易对形成一条疑似问题。三笔两两满足则三条，展示共享交易关联。保留原交易，不声称证实错误扣款。
-2. 按退款编号归集申请确认及到账。自申请确认满72小时，仍未全额到账才提醒；先到的到账保留，信息齐全再判断。部分到账显示差额，重放不累计。
-3. 正常购买、确认有问题、用户确认解决、关闭分开记录。确认有问题不等于解决；重复问题只能以用户明确确认解决结案，不能声称已验证退款。退款问题可以凭全额到账验证解决。
-4. 首次提醒不计追加；未回复时距实际上一条成功提醒至少24小时，最多自动追加两次。部分到账、延期、暂停、恢复和重启不重置计数。
-5. 确认有问题后停止无回复催办，等待新事实或用户明确约定。用户主动约定的提醒独立于自动追加次数；次数耗尽后仍可约定一次提醒，但不因此恢复自动催办。
-6. 明天提醒取 max(既有最早允许提醒时间, 当前时间+24小时)。只给日期缺时间时返回澄清需求，不自行猜测。
-7. 暂停期间保存输入事实，标记待评估，不创建问题、不自动结案、不发送提醒。恢复后按最新事实统一评估，不逐条补发暂停期间过期提醒。
-8. 关闭后保存新事实、更新资金事实展示及历史，维持关闭，不继续自动推进。重新开启必须用户明确要求，保留计数，先评估最新事实，不立即补旧消息；仍未解决时等待新约定。
-9. 原始输入与业务处理分层：无论正常、重复、暂停、关闭、失败，都保留接收与处理证据；同一事实只生效一次。
-10. 模拟外部通知提供提交与查询。成功才计发送次数；失败如实记录，本版不自动重试；未知结果后台核实，不盲目重复提交。
+1. 确定同步路线：同步def接口、同步数据库Session、threading.Lock、单后台线程、单worker；不混入一套异步数据库栈。
+2. 保留应用生成UUID文本主键。此为考试小数据量场景的实现取舍，外部operation_id独立生成，不将它与数据库主键用途混淆；不声称UUID不适合所有生产环境。
+3. 持久化模型从14张表精简至12张：accepted_events并入event_receipts的规范接收状态；notification_messages并入notification_operations的投递事实。原始输入和追加处理历史继续分别保存。
+4. 不建设商户管理、cluster分组或复杂故障编排。共享交易直接展示关联问题；模拟通知采用成功、失败、未知后核实的最小能力。
+5. 重新初始化引擎验证与真实进程重启验证明确区分，不把前者称为后者。
+6. 精简结构，不削减持久化、用户隔离、幂等、未知结果核实、停止控制和现场还原能力。
 
-## 2. 架构和模块边界
+## 2. 已确认的业务规则
 
-单进程FastAPI服务，单后台检查循环，SQLite文件持久化。第一版只启一个worker，避免多进程定时任务竞争；数据库唯一约束和事务仍作为防重底线。
+### 2.1 问题检测与结案
 
-建议模块：
+- 重复消费：同用户、同商户编号、同额、不同交易编号，时间差≤10分钟。每个无序交易对仅一条问题，原交易保留。
+- 三笔两两满足创建AB、AC、BC三条；09:00/09:05/09:11仅AB、BC两条。共享交易只能用于展示关联，不能推导不满足时间条件的新交易对。
+- 统一称“疑似重复消费”，不得称已证实错误扣款。
+- 退款按用户及退款编号归集。申请确认满72小时且未足额到账才创建逾期问题并提醒。到账可先于申请送达，信息不足时等待，不把缺失金额当0。
+- 正常购买、确认有问题、用户确认解决、关闭分别记录。确认有问题不等于解决。
+- 重复问题只能凭用户明确确认解决结案，依据USER_CONFIRMED；退款逾期可以凭足额到账验证解决，依据FULL_REFUND_VERIFIED。
+- 部分到账显示差额，足额到账优先于逾期检查，避免发出已过时的消息。正常、解决、关闭问题不会因输入重放重新打开。
 
-| 模块 | 职责 |
+### 2.2 提醒和用户控制
+
+- 首次成功提醒不计追加；未回复时，距最近成功提醒至少24小时自动追加，最多两次。
+- 部分到账、延期、暂停恢复、重启、关闭重开都不清零计数。
+- 确认有问题后退出无回复催办，等待新事实或下一项明确约定。
+- 用户主动约定独立于自动追加次数。次数耗尽仍允许明确约定一次；发送后等待事实/下一次约定，不恢复自动催办。
+- 明天提醒为max(既有最早提醒约束, now+24小时)。指定日期必须提供时间及时区，否则返回澄清提示，不默认猜测。
+- 暂停：继续接收、落盘事实，标记待评估；不新建问题、不自动结案、不发送。恢复时先处理最新事实，再决定当前下一步，不逐条补过期提醒。
+- 关闭：继续保存事实并展示到账变化，不自动转换关闭结论、不发新消息。重新开启必须用户明确要求；先核对最新事实，仍未解决则等新约定，不立即补旧任务。
+- 已发消息保留；已提交未知操作允许只读核实。暂停/关闭不等于撤回此前操作。
+
+### 2.3 留存与诚实性
+
+每次业务输入都保留，重复也保留；每次处理尝试追加历史。是否接收、是否生效、是否发送成功分开表示。失败和未知不伪装为0、成功或完成。交易备注等外部文字只作数据，不能授权、变更控制规则或读取他人数据。
+
+## 3. 架构、执行路线和配置
+
+### 3.1 单进程同步服务
+
+- FastAPI同步def业务接口，由线程池执行。SQLAlchemy采用同步引擎，每个请求/后台检查单独创建和关闭Session，不跨线程共享Session。
+- 单进程threading.Lock串行化修改、时间推进、调度和本地模拟提交。锁范围覆盖提交前复检及本地模拟调用，确保关闭与发送有确定先后。
+- 后台线程用Event.wait(interval)周期检查；真实模式无人操作也会推进。FastAPI生命周期负责启动和有界停止，不用阻塞sleep占住请求线程。
+- 启动只允许一个worker；本版不支持多个进程共享同一业务库运行调度。数据库约束仍兜底，但不把进程锁宣称为分布式锁。
+- 服务层管理事务与副作用；纯规则函数只计算。HTTP、后台和demo共用同一业务实现。
+- 避免嵌套获取同一Lock：锁由最外层服务入口持有，内部方法不再次加锁；先加业务锁，再开始写事务，固定顺序。
+
+### 3.2 建议代码边界
+
+| 文件/模块 | 职责 |
 |---|---|
-| config / clock | 校验配置、真实/模拟时钟、持久化模拟时间 |
-| auth | 配置测试Token到用户的映射，限制当前用户作用域 |
-| ingestion | 持久化每次接收、识别重复/冲突、规范化业务事实 |
-| detection | 两两重复交易检测、退款事实汇总与逾期判断 |
-| issue_service | 用户动作、暂停恢复、重开、状态转换和历史 |
-| reminder_service | 计算资格、安排任务、发送前检查、成功计数 |
-| notification_gateway | 模拟提交/查询、模拟收件箱与故障注入 |
-| scheduler | 启动恢复、周期检查、推进时间后的自动检查 |
-| api / schemas | Swagger接口、结构化输入输出、用户范围校验 |
-| demo / tests | 独立场景重放、断言、报告和重启验证 |
+| config.py / clock.py | 配置校验、UTC毫秒时间、双时钟 |
+| database.py / models.py | 引擎、独立Session、事务和约束 |
+| schemas.py / auth.py | 结构化输入、测试Token身份和权限 |
+| services/events.py | 接收日志、规范事件、去重冲突及恢复 |
+| services/issues.py | 两类检测、用户动作、事实汇总及处理历史 |
+| services/reminders.py | 资格、任务、成功计数、取消与未知核实 |
+| notifications.py / scheduler.py | 本地模拟网关、后台周期检查 |
+| main.py / api.py | 应用生命周期和Swagger接口 |
+| demo.py / tests/ | HTTP重放、业务测试及恢复验证 |
 
-服务层负责事务与副作用；规则函数以显式事实、状态和now输入返回判断，不在纯规则函数里发送消息。所有入口复用同一业务服务，演示不能直接修改最终状态凑结果。
+这些是职责边界，可按代码规模合并文件，不为凑模块拆空层。
 
-顺序：接收并落日志 → 去重/校验 → 落业务事实 → 汇总最新事实 → 转换允许转换的问题状态 → 取消失效提醒 → 创建合资格任务 → 发送前复检 → 模拟发送/核实 → 更新计数和历史。
-
-## 3. 时间、金额、身份和配置
-
-### 3.1 配置示例
+### 3.3 配置示例
 
 ```dotenv
 APP_TIME_MODE=simulated
@@ -53,270 +77,318 @@ APP_CHECK_INTERVAL_SECONDS=1
 APP_SIMULATED_START=2026-10-28T14:00:00+08:00
 APP_DB_PATH=./data/simulated.db
 APP_TEST_TOKENS_JSON={"demo-token-a":"user-a","demo-token-b":"user-b"}
+APP_DEMO_ADMIN_TOKEN=local-demo-admin-only
 APP_ENABLE_DEMO_CONTROLS=true
 ```
 
-- mode只允许real/simulated，无效配置启动失败，不能静默降级。切换模式修改配置并重启。
-- real默认data/real.db，simulated默认data/simulated.db。数据库保存mode，模式不匹配拒绝启动，避免手工误配同一文件。
-- real使用真实时钟，禁止推进时间；simulated启动后时间保持不动，由推进接口触发同一检查流程。后台仍检查当前模拟时间下的任务。
-- 模拟起始时间只首次使用，之后从数据库读取；推进必须单调不减，推进和检查串行，重启保留。
-- 输入ISO 8601带时区；统一转为UTC整数毫秒持久化，响应展示北京时间及+08:00。Windows部署依赖包含tzdata。
-- 金额只使用INTEGER分。API使用amount_fen等明确字段，拒绝负数及不合法金额；人民币固定CNY。
-- 10分钟、72小时、24小时、自动追加上限2是固定业务规则，不通过配置加速；演示用虚拟时间。
-- 身份由Bearer测试Token解析；请求正文的用户字段不能覆盖身份。无效Token返回401，跨用户资源统一404。时间推进是全局演示管理权限，不开放给普通用户；仅simulated且开启演示控制时可用。
-- 本版是本地演示认证，不宣称生产身份认证。测试Token不用于任何真实服务。
+- mode仅real/simulated，无效模式、非正间隔、无效时区/时间启动失败。timezone固定Asia/Shanghai，本版拒绝配置其他展示时区。
+- 配置启动时读取，切换重启生效。real默认data/real.db，simulated默认data/simulated.db；库内保存mode，错配拒绝启动。
+- real真实走时，禁止推进接口。simulated时间不自行流逝，推进接口落盘后自动检查；模拟初始时间仅首次使用，重启读取保存值，禁止倒退。
+- 后台查询未知操作按检查轮次执行，不依赖模拟时钟自然流逝，避免未知操作在固定虚拟时间下永远无法核实。
+- API时间必须ISO 8601带时区，入库UTC毫秒整数；响应转北京时间+08:00。输入精度限毫秒，超过精度返回校验提示。Windows依赖包含tzdata。
+- 金额整数分，字段名amount_fen/expected_amount_fen，拒绝负数、浮点分和布尔；交易及到账金额>0。固定CNY。
+- 10分钟、72小时、24小时、两次追加为固定业务规则；加速靠推进时钟，不修改规则。
+- 用户由Bearer测试Token解析；不能由正文指定身份。普通用户只能访问自己的资源，跨用户统一404，无效Token为401。
+- 全局推进时间及故障控制仅演示管理员可用，且必须simulated和开启演示控制。用户Token不具有管理权限；管理员控制不能冒充用户授权关闭问题。
+- 所有Token仅本地演示；日志不记录Token、Authorization或真实密钥。示例Token不连接任何真实服务。
 
-## 4. 表结构设计
+## 4. 数据模型总览与通用约束
 
-### 4.1 通用约定
+共12张表：app_users、user_settings、app_meta、event_receipts、processing_history、transactions、refunds、refund_arrivals、issues、issue_transactions、reminder_tasks、notification_operations。
 
-- 主键除用户/元数据外采用应用生成UUID TEXT，便于在调用外部服务前确定操作编号。
-- *_at为UTC毫秒INTEGER；*_json为规范JSON TEXT；金额INTEGER分；布尔INTEGER CHECK IN (0,1)。
-- 所有用户业务表包含user_id。跨表关联使用(user_id,id)复合外键，目标增加UNIQUE(user_id,id)，防止跨用户关联。
-- 启用PRAGMA foreign_keys=ON、WAL、busy_timeout。业务状态、历史、计数、任务创建在同一事务提交。
-- 原始日志与处理日志追加写，不随问题关闭删除。仅虚构数据；Token、Authorization和密钥不写日志。原始输入只指业务输入，不含认证秘密。
-- 用户触发的修改接口要求event_id，防止动作重放生成重复约定。读取接口无业务副作用。
+- 除用户、设置、元数据及关系表的自然/复合主键外，id采用uuid4生成的UUID TEXT。notification_operations用独立UUID operation_id作为PK。
+- UUID用于本版生成简单、无外部ID服务依赖，不以发送前预分配为所有表使用UUID的必要理由。生产可按规模评估整数/有序UUID/雪花ID等，本文不实现分布式ID服务。
+- *_at INTEGER为UTC毫秒；*_json TEXT为JSON；金额INTEGER分；布尔CHECK IN(0,1)。枚举用TEXT+CHECK限制取值，必填列NOT NULL。
+- 用户业务表包含user_id；跨用户表关系用(user_id,id)复合FK，目标提供UNIQUE(user_id,id)。UUID本身不作为授权依据。
+- 启用foreign_keys=ON、WAL和busy_timeout。索引按查询需要建立，不为所有字段单独建索引。
+- 不物理删除事实或历史。原始payload、哈希和接收时间不可修改；处理状态可以更新，但每次变化必须追加processing_history。
+- 用户修改请求必填event_id；所有返回区分接收、已应用、待处理、重复、冲突、失败。
 
-### 4.2 app_users / user_settings / app_meta
+## 5. 详细表结构
 
-| 表 | 字段及约束 |
+### 5.1 app_users / user_settings / app_meta
+
+| 表 | 字段与约束 |
 |---|---|
 | app_users | id TEXT PK；display_name TEXT NOT NULL；created_at INTEGER NOT NULL |
-| user_settings | user_id TEXT PK FK users；paused INTEGER NOT NULL DEFAULT 0；paused_at、resumed_at可空；updated_at NOT NULL |
+| user_settings | user_id TEXT PK FK users；paused INTEGER NOT NULL DEFAULT 0；paused_at/resumed_at可空；updated_at NOT NULL |
 | app_meta | key TEXT PK；value TEXT NOT NULL；updated_at INTEGER NOT NULL |
 
-app_meta保存schema_version、time_mode、virtual_now。Token映射读取配置，不明文写数据库。用户设置变更也进入输入/处理历史。
+元数据保存schema_version、time_mode、virtual_now；Token来自配置，不存数据库。设置变更也保存接收和处理记录。
 
-### 4.3 event_receipts：每次输入的原始接收记录
-
-| 字段 | 类型/约束 | 含义 |
-|---|---|---|
-| id | TEXT PK | 每次接收都有新编号，重复请求也新增 |
-| user_id | TEXT NOT NULL FK | 已认证归属 |
-| event_id | TEXT，可空 | 外部稳定事件编号；缺失也留记录 |
-| event_type | TEXT NOT NULL | TXN / REFUND_CONFIRMED / REFUND_ARRIVAL / USER_ACTION / SETTINGS / NOTIFICATION_RESULT |
-| source | TEXT NOT NULL | API / BACKGROUND / SIMULATOR |
-| payload_json | TEXT NOT NULL | 不含密钥的业务原文 |
-| payload_hash | TEXT NOT NULL | 对规范业务内容做哈希，不含接收时间 |
-| occurred_at | INTEGER，可空 | 事实发生时间 |
-| received_at | INTEGER NOT NULL | 接收时间 |
-| trace_id | TEXT NOT NULL | 关联调用与处理 |
-
-索引(user_id,event_id)、(user_id,received_at)。此表不对event_id加唯一约束，因为每次接收都必须留存。无效业务输入在认证通过后也记录；未认证请求只记录不含凭证的安全摘要，不能让其指定任意用户归属。
-
-### 4.4 accepted_events / processing_history：事实幂等与处理轨迹
-
-accepted_events：id PK；user_id NOT NULL；event_id NOT NULL；event_type NOT NULL；payload_hash NOT NULL；first_receipt_id FK；state NOT NULL；accepted_at NOT NULL；applied_at可空；UNIQUE(user_id,event_id)。
-
-state = ACCEPTED / DEFERRED / APPLIED / REJECTED。暂时失败仍保留待处理状态，错误写入处理历史，供恢复重评。相同event_id和哈希为重放；同编号不同内容为CONFLICT，保留第二份原文，不覆盖已确认事实。
-
-processing_history：id PK；user_id；receipt_id可空；accepted_event_id可空；issue_id可空；trigger；result；reason_code；detail_json；before_json可空；after_json可空；processed_at。记录DUPLICATE、CONFLICT、INVALID、DEFERRED_PAUSED、FACT_ONLY_CLOSED、APPLIED、FAILED等结果。每次处理尝试追加一行，不能靠覆盖一个状态还原全部过程。
-
-两层去重：event_id防同一输入重复生效；交易/退款/到账的业务唯一键防不同event_id包装同一事实。不同event_id但相同业务编号且内容冲突同样拒绝覆盖并留痕。
-
-### 4.5 transactions：交易事实
-
-字段：id PK；user_id NOT NULL；tx_no TEXT NOT NULL；merchant_id TEXT NOT NULL；merchant_name TEXT可空；amount_fen INTEGER NOT NULL CHECK(amount_fen>0)；currency TEXT NOT NULL DEFAULT CNY；occurred_at INTEGER NOT NULL；source_event_id FK；created_at INTEGER NOT NULL。
-
-约束：UNIQUE(user_id,tx_no)、UNIQUE(user_id,id)。索引(user_id,merchant_id,amount_fen,occurred_at)。不必单独建设商户表；检测按明确商户编号，不按模糊名字猜测。
-
-### 4.6 refunds：退款归集容器，支持到账先到
-
-字段：id PK；user_id NOT NULL；refund_no TEXT NOT NULL；tx_no TEXT可空；expected_amount_fen INTEGER可空 CHECK为空或>0；confirmed_at INTEGER可空；confirmation_event_id可空；created_at、updated_at NOT NULL。
-
-约束：UNIQUE(user_id,refund_no)、UNIQUE(user_id,id)。confirmed_at与expected_amount_fen应同时具备或同时缺失。到账先到时创建只有user/refund_no的容器；缺失金额不是0，不进行逾期或全额判断。
-
-tx_no先保留外部关联编号，不强制交易必须先到；可在交易到达后通过(user_id,tx_no)解析关联。此处不跨用户关联，不因交易缺失丢失退款事实。
-
-### 4.7 refund_arrivals：每笔到账事实
-
-字段：id PK；user_id NOT NULL；refund_id TEXT NOT NULL；arrival_no TEXT NOT NULL；amount_fen INTEGER NOT NULL CHECK>0；arrived_at INTEGER NOT NULL；source_event_id FK；created_at NOT NULL。
-
-约束：UNIQUE(user_id,arrival_no)、UNIQUE(user_id,id)；复合FK(user_id,refund_id)→refunds(user_id,id)。arrival_no定义为同一用户下稳定的到账流水号；不同合法到账不得用金额+时间生成去重键，以免误吞。
-
-到账总额SUM(amount_fen)实时汇总，不直接盲增一个余额。差额max(应退−累计到账,0)；超过应退金额时单独显示超额及异常说明，不丢弃事实。可判已足额到账，但不自动执行退回等额外操作。
-
-### 4.8 issues：问题处理与提醒控制
+### 5.2 event_receipts：原始接收与规范事件身份
 
 | 字段 | 类型/约束 | 说明 |
 |---|---|---|
-| id / user_id | TEXT PK / NOT NULL | 问题及归属 |
+| id | TEXT PK | 每次输入独立生成，重放也新增 |
+| user_id | TEXT NOT NULL FK | 已认证业务归属 |
+| event_id | TEXT可空 | 输入稳定事件号，缺失时仍留原文 |
+| event_type / source | TEXT NOT NULL | 交易/申请确认/到账/用户动作/设置/通知结果；API/BACKGROUND/SIMULATOR |
+| payload_json | TEXT NOT NULL | 去除认证秘密后的原始业务输入 |
+| payload_hash | TEXT NOT NULL | 按事件类型规范化内容的哈希，不含接收时间及请求追踪号 |
+| occurred_at | INTEGER可空 | 事实发生时间，缺失/不合法不伪造 |
+| received_at | INTEGER NOT NULL | 接收时间 |
+| trace_id | TEXT NOT NULL | 请求和处理关联 |
+| is_canonical | INTEGER NOT NULL DEFAULT 0 | 是否占有该用户的event_id幂等身份 |
+| canonical_receipt_id | TEXT可空 | 重放/冲突指向首次规范记录；规范记录自身可空 |
+| processing_state | TEXT NOT NULL | RECEIVED / ACCEPTED / DEFERRED / APPLIED / REJECTED / DUPLICATE / CONFLICT |
+| applied_at | INTEGER可空 | 首次事实应用时间 |
+
+约束与索引：UNIQUE(user_id,id)；部分唯一索引(user_id,event_id) WHERE is_canonical=1；CHECK规范记录必须有event_id；重复/冲突引用用同用户复合FK；索引(user_id,received_at)、(processing_state,received_at)。
+
+处理规则：先独立提交一条is_canonical=0的原始记录。合法输入在业务锁内竞争规范身份；同event_id同内容指向首条并标DUPLICATE，不重复生效；同event_id不同内容标CONFLICT，首条内容不变。校验失败保留为REJECTED但不占用规范身份，允许修正请求后重新提交。
+
+规范记录保存待恢复状态，替代独立accepted_events表。原始输入不变，状态变化由历史补充。处理崩溃后扫描RECEIVED和规范ACCEPTED/DEFERRED恢复；重复记录不重复执行，但应确保其规范记录仍在恢复队列。
+
+同步校验中间件在认证后保存业务原文，再做结构校验，避免FastAPI直接422而没有接收证据。请求体不能决定认证归属；未认证请求只写无凭证安全摘要，不按任意user_id入业务表。无法解析JSON时保存受限大小的原始文本及解析错误，不伪造正常JSON事实。
+
+### 5.3 processing_history：追加的处理、动作和状态变化
+
+字段：id TEXT PK；user_id NOT NULL；receipt_id可空；issue_id可空；task_id可空；trigger TEXT NOT NULL；result TEXT NOT NULL；reason_code TEXT NOT NULL；detail_json TEXT NOT NULL；before_json/after_json可空；processed_at INTEGER NOT NULL。
+
+关系均采用同用户复合FK。索引(user_id,issue_id,processed_at)、(user_id,receipt_id)、(user_id,task_id)。设置等用户级历史允许issue_id为空，仍可按用户和receipt查询。
+
+记录APPLIED、DUPLICATE、CONFLICT、INVALID、DEFERRED_PAUSED、FACT_ONLY_CLOSED、TASK_CREATED、SENT、UNKNOWN、FAILED、CANCELLED等处理结果。每次尝试追加，不覆盖历史；记录操作者、触发源、事件引用和结案依据。外部提交响应和查询响应也保存到事件/历史，足够解释为何未知、何时核实。
+
+### 5.4 transactions：交易事实
+
+字段：id PK；user_id NOT NULL；tx_no TEXT NOT NULL；merchant_id TEXT NOT NULL；merchant_name可空；amount_fen INTEGER NOT NULL CHECK>0；currency TEXT NOT NULL CHECK='CNY'；occurred_at INTEGER NOT NULL；source_receipt_id NOT NULL；created_at INTEGER NOT NULL。
+
+UNIQUE(user_id,tx_no)、UNIQUE(user_id,id)；复合FK引用规范receipt。查询索引(user_id,merchant_id,amount_fen,occurred_at)。按商户编号精确判断，不猜测名称相似度，不建设独立商户表。
+
+### 5.5 refunds：退款容器
+
+字段：id PK；user_id NOT NULL；refund_no TEXT NOT NULL；tx_no可空；expected_amount_fen INTEGER可空；confirmed_at INTEGER可空；confirmation_receipt_id可空；created_at/updated_at NOT NULL。
+
+UNIQUE(user_id,refund_no)、UNIQUE(user_id,id)。CHECK应退为空或>0；确认时间和应退金额同时为空或同时非空。
+
+到账先来：创建只有user/refund_no的容器；申请确认后补完整字段。缺失金额不当0，不计算逾期和足额。tx_no允许对应交易尚未到达，按(user_id,tx_no)延迟解析，不因交易缺失拒收退款。
+
+同退款编号的申请确认重放不覆盖；金额、确认时间冲突时保留输入及异常，待人工分析。本版不实现自动纠正已确认退款信息。
+
+### 5.6 refund_arrivals：到账事实
+
+字段：id PK；user_id NOT NULL；refund_id NOT NULL；arrival_no TEXT NOT NULL；amount_fen INTEGER NOT NULL CHECK>0；arrived_at INTEGER NOT NULL；source_receipt_id NOT NULL；created_at INTEGER NOT NULL。
+
+UNIQUE(user_id,arrival_no)、UNIQUE(user_id,id)；复合FK引用同用户退款和规范receipt。索引(user_id,refund_id)。arrival_no定义为用户范围稳定流水号，不能用金额+时间猜唯一性，以免误吞合法分笔到账。
+
+累计到账SUM唯一到账行，不盲目累加余额。差额max(expected−sum,0)，超额单独显示并记录异常，不删事实，不执行额外资金操作。sum≥expected表示已足额，展示精确到账总额。
+
+### 5.7 issues：问题结论和跟进控制
+
+| 字段 | 类型/约束 | 说明 |
+|---|---|---|
+| id / user_id | TEXT PK / TEXT NOT NULL | 问题及归属 |
 | issue_type | TEXT NOT NULL | DUPLICATE / REFUND_OVERDUE |
-| identity_key | TEXT NOT NULL | 无序交易对或退款业务身份 |
+| identity_key | TEXT NOT NULL | 交易无序对或退款id |
 | status | TEXT NOT NULL | OPEN / CONFIRMED_PROBLEM / NORMAL / RESOLVED / CLOSED |
 | followup_mode | TEXT NOT NULL | AWAITING_REPLY / WAITING_FACT / USER_SCHEDULED / STOPPED |
-| reason | TEXT NOT NULL | 可读触发原因 |
-| refund_id | TEXT可空 | 退款问题关联 |
-| auto_followup_count | INTEGER NOT NULL DEFAULT 0 CHECK 0..2 | 仅成功的自动追加 |
-| initial_sent_at | INTEGER可空 | 首次成功提醒 |
-| last_sent_at | INTEGER可空 | 最近任意成功提醒 |
-| not_before_at | INTEGER可空 | 当前最早允许提醒时间 |
-| schedule_generation | INTEGER NOT NULL DEFAULT 0 | 每次新约定递增，生成稳定任务键 |
+| reason | TEXT NOT NULL | 检测依据，不能声称证实重复扣款 |
+| refund_id | TEXT可空 | 仅退款问题使用，同用户FK |
+| auto_followup_count | INTEGER NOT NULL DEFAULT 0 CHECK 0..2 | 成功自动追加次数 |
+| initial_sent_at | INTEGER可空 | 首次成功提醒的发送时间 |
+| last_sent_at | INTEGER可空 | 最近已确认成功提醒的发送时间 |
+| not_before_at | INTEGER可空 | 当前最早允许提醒时刻 |
+| schedule_generation | INTEGER NOT NULL DEFAULT 0 | 用户新约定版本，递增不清零 |
+| requested_remind_at | INTEGER可空 | 当前用户明确约定，含未知操作期间接受的新约定 |
 | resolution_basis | TEXT可空 | USER_CONFIRMED / FULL_REFUND_VERIFIED |
-| resolution_detail_json | TEXT可空 | 用户动作/退款/到账事实引用 |
-| resolved_at / closed_at | INTEGER可空 | 分开记录，不互相冒充 |
+| resolution_detail_json | TEXT可空 | 用户动作或到账事实引用 |
+| resolved_at / closed_at | INTEGER可空 | 分开保存 |
 | created_at / updated_at | INTEGER NOT NULL | 时间 |
 
-约束：UNIQUE(user_id,issue_type,identity_key)、UNIQUE(user_id,id)。索引(user_id,status)、(followup_mode,not_before_at)。重复问题identity_key为按稳定顺序排列的两个交易内部id的JSON编码；退款问题用refund_id，避免字符串拼接歧义。
+UNIQUE(user_id,issue_type,identity_key)、UNIQUE(user_id,id)；索引(user_id,status)、(followup_mode,not_before_at)。identity_key用排序两个交易id的JSON编码，退款用refund_id。新事实改变退款差额，不改变用户处理结论。
 
-NORMAL不是RESOLVED，关闭不等于解决。CLOSED优先阻止自动转换；补到全额退款时status仍CLOSED，但资金事实显示全额到账，历史注明关闭后收到。仅重新开启后才按最新事实转为验证解决。
+约束：RESOLVED必须有依据及resolved_at；DUPLICATE不能使用FULL_REFUND_VERIFIED。NORMAL只对重复类有效；NORMAL/RESOLVED/CLOSED的followup_mode=STOPPED。关闭已解决问题可保留此前解决依据，关闭不是新增解决证据。
 
-### 4.9 issue_transactions：问题与交易关联
+### 5.8 issue_transactions：问题交易关系
 
-字段：user_id；issue_id；transaction_id；PRIMARY KEY(issue_id,transaction_id)。两组复合FK分别关联同用户issues和transactions。
+user_id NOT NULL；issue_id NOT NULL；transaction_id NOT NULL；PK(issue_id,transaction_id)。分别用(user_id,issue_id)、(user_id,transaction_id)复合FK关联issues和transactions；索引(user_id,transaction_id)。
 
-DUPLICATE创建时同一事务插入恰好两条关联。关联问题通过共享transaction_id查询，不维护cluster_id，避免新交易桥接时分组错乱。退款问题通过refund.tx_no展示关联交易；交易缺失则明确显示待补充。
+重复问题同一事务插入恰好两条关联。GET详情提供related_issue_ids及shared_transaction_ids；AB/AC/BC可直接互相关联。不要求连通分量算法，不以关联组代替逐对检测。退款通过refund.tx_no展示交易，缺失明确提示。
 
-### 4.10 reminder_tasks：提醒意图、提交和核实状态
+### 5.9 reminder_tasks：任务、提交状态和核实
 
-| 字段 | 类型/约束 | 含义 |
+| 字段 | 类型/约束 | 说明 |
 |---|---|---|
-| id / user_id / issue_id | TEXT | 同用户复合FK |
+| id / user_id / issue_id | TEXT | 同用户复合关联 |
 | kind | TEXT NOT NULL | INITIAL / AUTO_FOLLOWUP / USER_SCHEDULED |
-| sequence_no | INTEGER NOT NULL | 首次0；追加1/2；用户约定用generation |
-| task_key | TEXT NOT NULL | INITIAL、AUTO:1、AUTO:2、USER:n |
-| due_at | INTEGER NOT NULL | 最早执行时间 |
+| task_key | TEXT NOT NULL | INITIAL、AUTO:1、AUTO:2、USER:版本号 |
+| due_at | INTEGER NOT NULL | 计划发送下限 |
 | status | TEXT NOT NULL | PENDING / SUBMITTING / SENT / FAILED / UNKNOWN / CANCELLED |
-| operation_id | TEXT NOT NULL UNIQUE | 创建任务时预分配的外部操作号 |
-| content_json | TEXT NOT NULL | 发送时使用的事实快照与措辞 |
-| submitted_at / sent_at | INTEGER可空 | 提交与确认成功分开 |
-| counted_at | INTEGER可空 | 成功已计入问题计数的标记 |
-| next_verify_at | INTEGER可空 | 后台核实时间 |
-| error_code / error_detail | TEXT可空 | 失败或未知原因 |
-| source_event_id | TEXT可空 | 用户约定来源，首次/自动可空 |
+| operation_id | TEXT NOT NULL UNIQUE | 创建时独立分配，外部提交/查询使用 |
+| content_json | TEXT可空 | 真正提交前按最新事实生成，随后冻结 |
+| submitted_at / sent_at | INTEGER可空 | 提交时间/外部确认的实际发送时间 |
+| confirmed_at | INTEGER可空 | 本地获知成功的时间，与发送时间区别 |
+| counted_at | INTEGER可空 | 成功计数已生效，防重复查询重复增加 |
+| source_receipt_id | TEXT可空 | 约定来源 |
+| error_code / error_detail | TEXT可空 | 失败或未知说明 |
 | created_at / updated_at | INTEGER NOT NULL | 时间 |
 
-约束：UNIQUE(user_id,issue_id,task_key)、UNIQUE(user_id,id)。索引(status,due_at)、(status,next_verify_at)。SQLite部分唯一索引：每个问题最多一个status IN (PENDING,SUBMITTING,UNKNOWN)的有效任务，避免未知期间再安排消息。
+UNIQUE(user_id,issue_id,task_key)、UNIQUE(user_id,id)。索引(status,due_at)。部分唯一索引(user_id,issue_id) WHERE status IN ('PENDING','SUBMITTING','UNKNOWN')，限制每问题一个活动任务；启动验证SQLite支持所用特性。
 
-用户再次延期：更新尚未提交的同一待发送安排并追加历史，不堆出多条。已提交/未知任务不能假装撤销；记录新约定意图在事件中，先核实旧操作，再根据最新状态重新安排。失败任务不自动重发；若用户重新约定，创建新generation任务，保留失败任务。
+再次延期时，尚未提交的旧任务标CANCELLED并创建新generation任务，保留旧安排，不多发。状态转换在同一事务完成，先取消后插入以满足唯一约束。已提交/未知不能取消外部效果：只保存新的requested_remind_at，等旧操作核实后安排，绝不并行重复提交。
 
-计数更新：条件更新任务为SENT且counted_at为空 → 对INITIAL设置首次时间，对AUTO增加一次计数，对USER不修改追加数 → 写counted_at/last_sent_at/历史，同一事务提交。重复查询成功不会重复计数。
+失败不自动重试；相同task_key的FAILED不能被调度器重建。若用户重新约定可创建新USER版本，失败历史保留。核实确认发送成功时，同一事务条件更新counted_at：INITIAL设置initial_sent_at；AUTO增加一次count；USER不改count；更新last_sent_at和历史。重复成功响应不再计数。
 
-### 4.11 notification_operations / notification_messages：模拟外部服务
+### 5.10 notification_operations：模拟外部服务及收件箱
 
-notification_operations：operation_id TEXT PK；user_id；task_id；scenario SUCCESS/FAIL/UNKNOWN_THEN_SUCCESS/UNKNOWN_THEN_FAILURE；provider_state NOT_SUBMITTED/PENDING/SENT/FAILED；query_count；resolve_after_queries；submitted_at；completed_at可空；error_detail可空。
+字段：operation_id TEXT PK；user_id NOT NULL；task_id TEXT NOT NULL UNIQUE；behavior TEXT NOT NULL；provider_state TEXT NOT NULL；recipient TEXT NOT NULL；content_json TEXT NOT NULL；submitted_at INTEGER NOT NULL；delivered_at INTEGER可空；error_detail TEXT可空。
 
-notification_messages：id PK；operation_id TEXT UNIQUE FK；user_id；recipient；content_json；delivered_at。
+behavior=SUCCESS/FAIL/UNKNOWN_THEN_SUCCESS/UNKNOWN_THEN_FAILURE。provider_state=PENDING/SENT/FAILED。使用稳定operation_id模拟提交幂等，任务关联同用户；与业务任务独立事务落盘。
 
-模拟发送服务的数据独立于业务任务状态，均落盘；业务SUBMITTING先提交事务，再调用模拟服务。UNKNOWN_THEN_SUCCESS可在提交时已产生消息但暂不返回确认，后续按operation_id查询成功；因此未知时绝不可再次创建操作发送。模拟服务对相同operation_id幂等。
+- SUCCESS：提交产生SENT及delivered_at，返回成功。
+- FAIL：提交产生FAILED，返回明确失败，不投递。
+- UNKNOWN_THEN_SUCCESS：提交已产生SENT及delivered_at，但响应未知；下一次查询返回持久化成功事实。
+- UNKNOWN_THEN_FAILURE：提交结果暂不可知，持久化PENDING；下一次查询揭示FAILED，无消息产生。
 
-未知操作查询返回NOT_SUBMITTED时可确认未产生外部效果，标明确失败；不得自动重新提交。持续不可核实时保持UNKNOWN、显示原因并继续有间隔查询，不伪造失败或成功。
+无需query_count或复杂编排。收件箱查询provider_state=SENT的行，显示实际内容与时间；不新增消息表。业务任务UNKNOWN与服务商SENT可以暂时不同，正是结果未知场景。
 
-模拟收件箱是可观察外部效果，任务表中的PENDING不是“已发送”。关闭/暂停后依然允许只读核实此前已提交的操作，不创建新外部效果。
+查询结果也记事件和历史；未找到operation只在本地模拟器的权威存储语义下判定未提交，业务标明确失败，不自动提交。真实服务若不能保证“查无即未发生”，应继续UNKNOWN，本版不假设真实平台具有此能力。
 
-## 5. 检测与状态转换
+## 6. 接收、幂等、事务与异常
 
-### 5.1 疑似重复
+### 6.1 两层去重
 
-每笔新交易查询同用户、商户、金额、时间范围±600000ms的其他交易，逐对检查。用排序内部id的identity_key插入，唯一约束兜底。09:00/09:05/09:11只有两对；09:00/09:05/09:09有三对。
+事件层：规范receipt的(user_id,event_id)部分唯一约束；业务层：交易编号、退款编号、到账流水、问题身份、任务键各自唯一。规范哈希包括事件类型和全部业务内容，时间规范化UTC，金额用整数；同event_id包装不同类型视为冲突。
 
-既有问题无论NORMAL/RESOLVED/CLOSED均不因重放重建或打开。新的独立交易对不受旧问题关闭影响。措辞固定“疑似重复消费，待用户确认”。
+业务编号相同且内容一致：保留本次receipt并记录业务重复，不重复记账；内容不一致：CONFLICT，不覆盖首个事实。不同用户同编号允许，互不冲突。
 
-### 5.2 退款
+### 6.2 写入流程与暂停
 
-信息不齐：WAITING_INFORMATION，作为派生展示状态，不触发逾期。
-信息齐全：先汇总到账，足额则显示到账；若已有非关闭退款问题，验证解决并取消未提交任务。若从未逾期，仅展示退款跟踪事实，不凭空制造“曾逾期”问题。
-未足额且now≥confirmed_at+72h：创建/更新退款逾期问题。部分到账只改变事实和差额，不重置次数，不恢复确认有问题后的无回复催办。
+1. 认证后保存原始接收，独立事务提交。
+2. 结构校验、取得业务锁，认领规范身份；业务状态与处理历史同事务提交。
+3. 输入事实写入transactions/refunds/refund_arrivals；若暂停，receipt=DEFERRED，仅保存事实，不触发检测、问题结案和提醒。
+4. 未暂停则汇总该用户最新事实、转换允许的状态、调整任务、追加历史；规范receipt改APPLIED。
+5. 恢复时先汇总全部已保存事实，再创建/更新问题及任务；禁止按历史输入逐条触发通知，否则会误发后来已到账的逾期消息。
 
-### 5.3 用户动作
+读取暂停中问题时明确“新事实待评估”，可展示已保存到账事实，不能把旧结论冒充最新检查结果。暂停期间接受用户显式关闭/修改约定等控制动作，但不主动发送；这些是用户指令，不是后台继续推进。
 
-| 动作 | 结果 |
+### 6.3 IntegrityError与失败
+
+- 可预期唯一冲突：使用保存点隔离插入失败，回滚到保存点后按完整唯一键重查；内容一致按重复，内容不同按冲突。
+- 不将所有IntegrityError吞成重复：FK、CHECK等违规记录具体错误并失败，不输出成功。
+- 业务提交失败回滚状态、任务和历史同一事务；原始receipt仍在，另开可用事务记录FAILED处理尝试，保留待恢复状态。
+- 数据库本身不可用：503并明确未接受/未完成，保留可取得的进程错误日志，不声称数据已保存。
+- 原始输入与历史不含认证秘密；所有业务异常保留输入引用，不能用0或空成功掩盖失败。
+
+## 7. 状态、调度、关闭与恢复
+
+### 7.1 用户动作
+
+| 动作 | 状态与后续 |
 |---|---|
-| 正常购买 | 仅重复类；status=NORMAL；停止提醒，取消未提交任务 |
-| 确有问题 | status=CONFIRMED_PROBLEM；WAITING_FACT；停止自动催办 |
-| 明天/指定时间提醒 | 保留问题处理结论；USER_SCHEDULED；创建或延期一条约定 |
-| 已自行解决 | RESOLVED；USER_CONFIRMED；保存用户动作依据；停止提醒 |
-| 关闭 | CLOSED；STOPPED；取消PENDING，保留已发送和未知操作 |
-| 重新开启 | 用户显式动作；保留次数；先核对事实；未解决则WAITING_FACT，不补发旧任务 |
+| NORMAL | 仅重复类；NORMAL/STOPPED；取消PENDING |
+| CONFIRM_PROBLEM | CONFIRMED_PROBLEM/WAITING_FACT；取消无回复待催任务 |
+| SNOOZE | 保留OPEN或CONFIRMED_PROBLEM；USER_SCHEDULED；保存约定并安排一条 |
+| RESOLVE | RESOLVED/STOPPED；USER_CONFIRMED；保存原始动作引用 |
+| CLOSE | CLOSED/STOPPED；取消PENDING，保留已提交、未知、已发记录 |
+| REOPEN | 仅CLOSED显式开启；保留计数，退款已足额则验证解决，否则OPEN或恢复确认结论并WAITING_FACT |
 
-用户可以直接确认解决，不强制先确认有问题。RESOLVED退款的后续事实可继续补证据，但不覆盖原用户确认依据；历史可增加全额到账事实。
+REOPEN从历史恢复关闭前OPEN/CONFIRMED_PROBLEM的结论；原来已解决的仍保留解决事实，不靠重开抹去依据。NORMAL和RESOLVED不自动重开。本版不提供撤销正常/解决结论的隐式功能，重复动作返回无变化并留记录。
 
-### 5.4 调度资格
+### 7.2 自动调度
 
-- 自动：状态允许、用户未暂停、AWAITING_REPLY、无未知/提交中任务、未到上限。
-- 首次：从未成功首次提醒且存在待提醒问题。
-- 自动追加：count<2且now≥last_sent_at+24h，并满足not_before_at。
-- 用户约定：到due_at且问题仍有效、用户未暂停；发送后WAITING_FACT，不恢复自动催办。
-- 延期后不通过while循环补齐24/48小时任务；一次检查最多发送该问题一条，后续自动追加从实际成功发送时起至少24小时。
-- 每次真正提交前重新读取最新状态、暂停设置和退款事实，取消已失效任务。
+- 首次：问题允许、未暂停、AWAITING_REPLY、无活动任务和既有失败首次任务，创建INITIAL。
+- 自动追加：首次已成功、AWAITING_REPLY、count<2，due=max(last_sent_at+24h,not_before_at)；最多两次，次数只在确认成功后增加。
+- 用户约定：使用requested_remind_at与现有约束较晚值；发送后WAITING_FACT，不恢复自动催办。重复/冲突用户动作不新增版本。USER任务携带其generation；确认旧任务结果时，仅在版本仍相同才清除requested_remind_at并转WAITING_FACT。若期间已有更新约定，保留新版本并在旧任务核实后安排；未知期间的新约定不丢失。
+- 发送前重新读取用户暂停、问题结论和退款事实；足额、正常、关闭、解决则取消未提交任务。消息内容以此时事实生成，不沿用过时差额。
+- 大幅推进或恢复：每问题一次检查最多实际发送一条，后续至少距最近实际成功发送24小时；不循环补0/24/48小时历史消息。
+- 未知核实成功后，last_sent_at用提供者实际delivered_at；confirmed_at记核实时间。当前检查只核实，不连发下一条；下一轮才按资格决定。
 
-## 6. 并发、关闭顺序和恢复
+### 7.3 关闭先后和提交窗口
 
-第一版用单进程全局async业务锁串行修改接口、时间推进、调度与模拟提交；锁内只调用本地有界模拟服务，不接真实网络。请求先持久化接收记录，是否“接受关闭”以关闭事务成功提交为准。
+业务锁串行控制修改和本地模拟发送。SUBMITTING先提交事务，再使用预分配operation_id调用本地模拟服务，最后落成功/失败/未知结果。
 
-关闭提交先于发送：发送前复检阻止提交；发送提交先于关闭：如实保留外部操作，不声称撤回。SUBMITTING/UNKNOWN在关闭后继续查询既有operation_id，结果计入真实历史，但不安排下一条。
+关闭事务先成功：后续发送复检必须停止。操作先提交：关闭不能声称撤回；UNKNOWN/SUBMITTING只查询已有operation_id，不重提。关闭/暂停后只读核实结果可更新真实发送计数和历史，但不得创建后续消息。
 
-启动恢复：读取mode/clock → 扫描SUBMITTING/UNKNOWN并查询既有操作 → 恢复DEFERRED/ACCEPTED输入 → 对未暂停用户汇总最新事实 → 取消失效任务 → 按当前状态安排至多一条合资格提醒。暂停用户不业务推进，只核实既有提交。
+崩溃窗口：SUBMITTING已提交而服务未调用，启动查询模拟服务确认为不存在后标明确失败；服务已执行而业务未记结果，启动查询得到既有结果并只计一次。不存在不能触发盲重试。
 
-数据库提交失败回滚业务事务，原始receipt已独立提交；补写FAILED处理记录。若数据库本身不可用，返回503并明确未接受，不声称已持久化；保留可取得的进程错误日志。进程崩溃后可由已落盘receipt恢复处理。
+### 7.4 启动与暂停恢复
 
-不承诺真实跨系统exactly-once；本版借稳定operation_id、幂等模拟服务、恢复查询实现可验证的单次外部效果。后续替换真实服务时需服务商支持查询/幂等能力，不能仅靠本地事务保证。
+读取schema/mode/时钟 → 恢复未完成接收及规范身份 → 查询SUBMITTING/UNKNOWN → 未暂停用户先汇总最新事实 → 更新非关闭问题 → 取消失效任务 → 安排当前合资格任务。暂停用户只保存事实及核实已提交操作，不业务推进。
 
-## 7. Swagger接口约定
+关闭后足额退款：资金事实显示足额，status仍CLOSED，历史写FACT_ONLY_CLOSED；显式重新开启后才可依据最新事实验证解决。已用户确认解决的退款再足额到账只补证据，不覆盖原结案依据。
+
+本地幂等模拟可验证单次外部效果，不承诺替换任意真实服务后自动实现跨系统exactly-once。
+
+## 8. Swagger接口
 
 | 接口 | 用途 |
 |---|---|
-| GET /health | 模式、版本、后台运行状态，不泄露Token |
+| GET /health | 模式、版本、后台检查健康及最近错误，不泄露配置密钥 |
 | GET /me | 当前虚构用户 |
-| POST /events/transactions | 输入交易，含event_id |
-| POST /events/refund-confirmations | 输入应退金额、确认时间、退款编号 |
-| POST /events/refund-arrivals | 输入arrival_no、到账金额和时间 |
-| GET /issues / GET /issues/{id} | 原因、相关交易、资金事实、状态、结案依据 |
-| GET /issues/{id}/history | 原始事件引用和处理时间线 |
-| POST /issues/{id}/actions | NORMAL / CONFIRM_PROBLEM / SNOOZE / RESOLVE / CLOSE / REOPEN；event_id必填 |
-| PUT /me/settings | 暂停/恢复；event_id必填 |
-| GET /refunds | 未齐全、未逾期、部分/全额到账跟踪 |
-| GET /reminders / GET /notifications | 任务状态及模拟收件箱 |
-| GET /events/{id} | 当前用户原始业务事件与处理结果 |
-| GET /demo/clock / POST /demo/clock/advance | 受限演示管理接口；推进后自动检查 |
-| PUT /demo/notification-behavior | 仅演示管理权限，设置后续模拟结果 |
+| POST /events/transactions | event_id、tx_no、merchant_id、amount_fen、occurred_at |
+| POST /events/refund-confirmations | event_id、refund_no、expected_amount_fen、confirmed_at、可选tx_no |
+| POST /events/refund-arrivals | event_id、refund_no、arrival_no、amount_fen、arrived_at |
+| GET /issues / GET /issues/{id} | 原因、关联交易/问题、资金事实、结论和依据 |
+| GET /issues/{id}/history | 用户处理、输入引用、状态与提醒历史 |
+| POST /issues/{id}/actions | event_id、枚举动作、条件提醒时间 |
+| PUT /me/settings | event_id、paused；恢复自动触发汇总 |
+| GET /refunds | 信息未齐、未逾期、部分/足额到账跟踪 |
+| GET /reminders / GET /notifications | 任务及外部模拟收件箱 |
+| GET /events/{receipt_id} | 当前用户原始输入和处理记录 |
+| GET /demo/clock / POST /demo/clock/advance | 演示管理员；推进自动检查 |
+| PUT /demo/notification-behavior | 演示管理员；设置后续结果，不影响已提交操作 |
 
-动作通过枚举与条件字段校验。SNOOZE支持tomorrow或remind_at；指定值缺少时间/时区返回422及明确说明，不创建任务。普通用户不能设置provider状态、追加次数或问题结案依据。
+日期缺时间/时区返回422及明确补充要求，不生成约定；不存在或跨用户资源404。用户不能直接改次数、结案依据、provider状态。GET不触发检测或发送。后台错误可观察，不静默吞异常。
 
-返回同时说明received、applied、deferred、duplicate、conflict；收到不等于生效。后台失败在health及处理记录可查，不静默吞异常。GET只展示持久化事实，不为了刷新页面偷偷触发推进。
+全局演示控制记录管理员操作和前后时间到应用审计日志；不混入普通用户的授权事件。保留demo管理日志作为验收证据，不记录管理Token。
 
-## 8. 验收与可重放演示
+## 9. 验收、证据和恢复测试
 
-pytest每场景独立数据库和时钟。重启场景使用临时文件库与实际进程重启，不能仅用内存对象模拟。demo脚本通过HTTP业务接口操作，按顺序输出输入、时间、系统行为、断言和证据；不直接改数据库最终状态。
+所有场景独立数据库/时钟，合并演示时明确隔离。pytest覆盖规则与服务，demo.py通过HTTP输入事件、动作及推进时间，不直接写最终状态。对后台任务用有上限轮询等待结果，不能靠无限等待。
 
-| 场景 | 关键断言 |
+| 场景 | 必须检查的实际结果 |
 |---|---|
-| 1 两笔30元 | 保留2交易；1疑似问题；关联准确 |
-| 2 正常并重放 | NORMAL保留；不重开、不新增提醒 |
-| 3 三笔两两满足 | AB/AC/BC共3；重放不增；共享交易可定位 |
-| 4 100退款到60再40 | 72h提醒；先差4000分；最终足额验证解决；重放不增 |
-| 5 全额先到 | 补申请后到账展示正确；逾期消息0 |
-| 6 不回复 | 首次count=0；24h前不追加；24/48h两次；以后不催 |
-| 7 延期 | 不早于now+24h及既有约束；次数保留；不堆任务 |
-| 8 确认问题 | 待解决，结案依据为空；不继续无回复催办 |
-| 9 关闭后到账 | CLOSED保留；事实更新；不发消息 |
-| 10 中断恢复 | 问题、计数、时钟、已发消息保留；不重复处理 |
+| 1 两笔30元 | 原交易2笔、疑似问题1条、关联准确、不删除 |
+| 2 正常并重放 | NORMAL和历史保留，不重新打开、不重新提醒 |
+| 3 三笔两两满足 | AB/AC/BC三条、共享交易关联可定位、重放不增加 |
+| 4 退100到60再40 | 满72h提醒；差4000分；最终验证解决；到账重放不累计 |
+| 5 全额先到申请后到 | 信息齐全显示到账，逾期通知0条 |
+| 6 持续不回复 | 首次count=0；24h前不追加；24/48h各一次；以后不催 |
+| 7 明天提醒 | 不早于now+24h及既有约束；次数不清零；不堆消息 |
+| 8 确认问题 | 仍待解决、无成功依据、退出无回复催办 |
+| 9 关闭后到账 | CLOSED不变，事实更新，不继续发消息 |
+| 10 中断恢复 | 问题、计数、时钟、任务和已发消息保留，不重复处理 |
 
-补充：10分钟整/超1ms、72小时整/前1ms；跨用户同编号；暂停跨多个到期点恢复；暂停期间到账恢复后不误催；关闭先于发送/发送先于关闭；未知期间重启核实；明确失败不计数；次数耗尽后的主动约定；确认问题后约定不恢复催办；事件内容冲突；指定日期缺时间；real禁止推进；模式错配拒绝启动。
+必要边界：10分钟整/超1ms、72小时整/前1ms；跨用户同编号/权限；暂停多天恢复不补发；暂停期间足额恢复不误催；关闭先后；未知核实与重启；失败不计数；次数耗尽后的用户约定；确认问题后约定不重启自动催办；事件和业务编号内容冲突；缺失时间；real推进拒绝、库模式错配拒绝。
 
-输出reports/acceptance.md或JSON，包含场景、输入、预期、实际、通过/失败、证据位置、修复复测记录。未实现不写通过。demo_output.txt是运行证据，不能替代demo源码、数据和复现说明。5—10分钟录屏可后补，等价可重放脚本优先。
+恢复分两层：
 
-## 9. 交付与时间预算
+1. 自动快速验证：临时文件库、关闭Session/引擎、重新初始化并运行完整启动恢复。标注为“进程内恢复验证”。
+2. 最终演示验证：停止真实服务进程，保留文件库，重新启动后查询并重放事实。记录启动和核验输出，标注为“真实进程重启验证”。
 
-交付：源码、固定依赖、.env.example、README启动/输入/推进/查询/验收步骤、虚构测试数据、设计、验收报告、demo脚本和实际输出、AI原始协作记录及索引、复用及个人贡献说明、已知缺口。
+若第二层未做，报告注明未验证，不用第一层代替声称通过。真实模式另做短后台烟测：无用户消息也能执行周期检查；虚拟业务阈值不因此改短。
 
-AI记录覆盖本次需求分析、豆包会话、设计、编码、测试与失败修正；保存可取得原始记录，索引不能代替原文。无法完整导出的范围如实说明，不伪造、不提交密钥或无关私人数据。
+reports/acceptance.md或JSON包含场景、输入、预期、实际、证据位置、失败修复及复测。demo输出展示输入/时间/系统行为/最终状态/断言，存为文本证据；源码、数据、步骤共同组成可重放演示。可录5—10分钟视频，但不替代源码或运行说明。
 
-建议时间预算：前20分钟确认设计和测试骨架；55分钟事实/去重/检测；55分钟动作/调度/控制；40分钟通知/恢复/隔离；35分钟验收修复；25分钟文档和演示；最后10分钟检查提交。具体以实际开始时间和剩余时间调整，交付材料同步积累。
+## 10. 交付、优先级和当前代码差异
 
-缩减顺序：页面美化/自定义前端、独立商户管理、复杂框架抽象、录屏（已有等价重放时）。不得把持久化、隔离、去重、未知结果、停止条件悄悄降级；来不及则逐项标缺口。所有完成/通过声明基于实际运行证据。
+交付：源码、固定依赖与配置样例、README干净环境启动和操作说明、虚构数据、设计、验收报告、demo及实际输出、AI原始协作记录与索引、关键人工判断/个人贡献、组件复用和缺口说明。
 
-## 10. 当前项目差异与实施边界
+AI记录包含豆包、Codex需求理解到编码测试修复的可取得原始输入输出和工具结果。索引/总结不能替代原文；导出缺失如实说明，不伪造，不提交认证秘密或无关私人数据。
 
-本次只新增设计文档，不修改已有app代码。当前已存在config.py、clock.py、database.py、models.py，需实施时逐项核对：
+实施顺序：
 
-- 金额Numeric改INTEGER分；普通DateTime改明确UTC毫秒或等价可靠转换。
-- 交易/退款全局唯一改用户复合唯一；到账补用户归属、稳定流水号及复合关联。
-- 退款容器允许申请信息尚未齐全；区别confirmed_at与提交申请时间。
-- Issue拆分处理状态与followup_mode，移除必需cluster依赖，增加计数/约定约束。
-- Reminder“写入即已发”改为任务状态、稳定operation_id和模拟外部结果。
-- 增加原始接收、幂等事实、追加处理轨迹和模拟消息表。
-- 配置无效时明确失败；校验数据库模式；补真实后台检查、授权和启动恢复。
-- create_all不会修改已有表；开发阶段使用新版本演示数据库，保留旧库备份，不自动删除原数据。schema_version不兼容拒绝启动并说明迁移/新库步骤。
+1. 对齐同步基础、schema和配置；建立最小测试与留存/幂等入口。
+2. 重复检测及用户正常结论：场景1/2/3。
+3. 退款乱序、累计和结案：场景4/5。
+4. 提醒、约定、确认问题、暂停关闭：场景6/7/8/9。
+5. 模拟提交/查询、未知核实、启动恢复：场景10及异常边界。
+6. HTTP重放、全量回归、隔离检查、报告、运行说明与记录整理。
 
-当前目录没有Git仓库，因此本文不创建提交、不初始化仓库；后续如需版本管理再明确执行。本文需用户审阅后再进入实施计划和编码。
+时间盒从实际开始计，最多4小时，不因提前收到题面或方案自动宣称已计时。预留至少最后30分钟用于交付核验和提交；文档和证据同步积累，最后不补造结果。
+
+缩减优先级：自定义前端、图分组、商户管理、复杂故障脚本、多层抽象、额外录屏（已有等价重放时）。必要规则和数据留存能力不可用“增强”名义删除，来不及逐项记缺口且不算通过。
+
+现有app/config.py、clock.py、database.py、models.py仍为早期骨架，本次修订只改文档：
+
+- Numeric改整数分，普通DateTime改明确UTC毫秒；校验时区和配置，不静默降级。
+- 全局编号唯一改用户范围，到账补用户归属、稳定arrival_no和复合FK。
+- 退款容器允许信息缺失；Issue拆结论与跟进模式；移除必需cluster。
+- Reminder写入即已发改任务和外部操作；增加接收、处理历史及恢复状态。
+- 补API、鉴权、后台线程、通知模拟、恢复及测试。当前环境SQLAlchemy缺失，依赖未齐，不宣称可运行。
+- create_all不迁移已有表；schema不兼容拒绝启动。开发可配置新库，旧数据保留，不自动删除或覆盖。
+- 项目已初始化本地Git，基线d41e417；本版文档单独提交，便于审阅，不混入实现改动。
+
+本文经用户审阅后再写实施计划和编码，所有验收通过声明必须有实际运行证据。
