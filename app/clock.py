@@ -1,4 +1,4 @@
-"""UTC integer-millisecond clocks; simulated changes commit before returning."""
+"""UTC整数毫秒时钟；模拟时间推进提交后才返回，避免重启丢失。"""
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from .models import AppMeta

@@ -1,4 +1,4 @@
-"""Explicit SQLite lifecycle; importing this module never creates a database."""
+"""显式管理SQLite生命周期，导入模块不创建数据库。"""
 from pathlib import Path
 from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.orm import declarative_base, sessionmaker

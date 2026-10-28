@@ -1,0 +1,12 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+___________ test_receipt_hash_does_not_change_after_original_commit ___________
+tests\test_business.py:402: in test_receipt_hash_does_not_change_after_original_commit
+    assert event['payload_hash']==hashes[result['receipt_id']]
+E   AssertionError: assert 'df45f7b9aae3...1e98853b6a197' == '3dd4fba1d447...5d43257f3f836'
+E
+E     - 3dd4fba1d4476a1ad380235afdb5b67ae39e1398219cd3c50525d43257f3f836
+E     + df45f7b9aae34bfd881a0e9e86e3875a32f69ac728d9c45984f1e98853b6a197
+=========================== short test summary info ===========================
+FAILED tests/test_business.py::test_receipt_hash_does_not_change_after_original_commit
+1 failed, 33 deselected in 0.88s

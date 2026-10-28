@@ -1,4 +1,4 @@
-"""Durable facts, input receipts, processing history and simulated effects."""
+"""持久化事实、原始接收、追加处理历史和模拟外部效果。"""
 import time
 from uuid import uuid4
 from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint, text

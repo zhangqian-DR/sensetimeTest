@@ -2,7 +2,7 @@
 import json
 import threading
 from uuid import uuid4
-from sqlalchemy import select, func
+from sqlalchemy import select, func, literal_column
 from .models import (UserSettings, AppMeta, EventReceipt, ProcessingHistory, Transaction,
                      Refund, RefundArrival, Issue, IssueTransaction, ReminderTask, NotificationOperation)
 from .services.events import dump, digest, normalize
@@ -45,11 +45,16 @@ class BillingService:
 
     def _record(self, user, event_type, payload):
         now = self.clock.now_ms()
+        # 哈希采用规范化内容，但预计算失败不阻止原文落盘；提交后不再改写。
+        try:
+            hash_payload=normalize(event_type,payload,now)
+        except (ValueError,TypeError,OverflowError):
+            hash_payload=payload
         with self.database.session_factory.begin() as session:
             if session.get(UserSettings, user) is None:
                 raise DomainError(404, 'User not found')
             record = EventReceipt(user_id=user, event_id=payload.get('event_id') if isinstance(payload,dict) and isinstance(payload.get('event_id'),str) else None,
-                event_type=event_type, payload_json=dump(payload), payload_hash=digest({'type':event_type,'payload':payload}),
+                event_type=event_type, payload_json=dump(payload), payload_hash=digest({'type':event_type,'payload':hash_payload}),
                 received_at=now, processing_state='RECEIVED', is_canonical=False)
             session.add(record)
             session.flush()
@@ -83,7 +88,6 @@ class BillingService:
                     receipt.processing_state=result
                     self._history(session,user,result,receipt=receipt_id,detail={'canonical_receipt_id':canonical.id})
                 else:
-                    receipt.payload_hash=norm_hash
                     receipt.is_canonical=True
                     receipt.occurred_at=next((normalized[k] for k in ('occurred_at','confirmed_at','arrived_at') if k in normalized),None)
                     result = self._apply(session,user,event_type,normalized,receipt_id,now)
@@ -186,8 +190,10 @@ class BillingService:
                 issue.status='RESOLVED'
                 issue.followup_mode='STOPPED'
             else:
+                # 模拟时间可停在同一毫秒，SQLite rowid按持久化顺序打破时间并列。
                 closes=session.scalars(select(ProcessingHistory).where(ProcessingHistory.issue_id==issue.id,
-                    ProcessingHistory.result=='CLOSE').order_by(ProcessingHistory.processed_at.desc())).all()
+                    ProcessingHistory.result=='CLOSE').order_by(ProcessingHistory.processed_at.desc(),
+                        literal_column('processing_history.rowid').desc())).all()
                 old=json.loads(closes[0].before_json) if closes and closes[0].before_json else {}
                 issue.status=old.get('status','OPEN')
                 if issue.status not in ('OPEN','CONFIRMED_PROBLEM'):
@@ -465,7 +471,6 @@ class BillingService:
                             receipt.processing_state='DUPLICATE' if canonical.payload_hash==norm_hash else 'CONFLICT'
                         else:
                             receipt.is_canonical=True
-                            receipt.payload_hash=norm_hash
                             result=self._apply(session,user,kind,normalized,receipt_id,self.clock.now_ms())
                             receipt.processing_state='CONFLICT' if result=='CONFLICT' else ('DEFERRED' if session.get(UserSettings,user).paused else 'APPLIED')
                         self._history(session,user,'RECOVERED_INPUT',receipt=receipt_id,detail={'state':receipt.processing_state})

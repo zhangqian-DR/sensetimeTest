@@ -1,0 +1,12 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+___________ test_reopen_uses_latest_close_when_clock_does_not_move ____________
+tests\test_business.py:388: in test_reopen_uses_latest_close_when_clock_does_not_move
+    assert service.get_issue('user-a',issue)['status']=='CONFIRMED_PROBLEM'
+E   AssertionError: assert 'OPEN' == 'CONFIRMED_PROBLEM'
+E
+E     - CONFIRMED_PROBLEM
+E     + OPEN
+=========================== short test summary info ===========================
+FAILED tests/test_business.py::test_reopen_uses_latest_close_when_clock_does_not_move
+1 failed, 32 deselected in 0.99s

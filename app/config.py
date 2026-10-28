@@ -1,4 +1,4 @@
-"""Validated startup configuration. Test credentials are for local simulation only."""
+"""启动时严格校验配置；测试凭证仅用于本地模拟。"""
 import json
 import os
 from dataclasses import dataclass, field

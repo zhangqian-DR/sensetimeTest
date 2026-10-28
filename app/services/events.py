@@ -37,6 +37,8 @@ def normalize(event_type, payload, now):
         for field in ('tx_no', 'merchant_id'):
             required_string(p, field)
         positive_money(p, 'amount_fen')
+        if p.get('merchant_name') is not None and not isinstance(p['merchant_name'],str):
+            raise ValueError('merchant_name must be a string or null')
         p['occurred_at'] = parse_time_ms(required_string(p, 'occurred_at'))
         if p.get('currency', 'CNY') != 'CNY':
             raise ValueError('Only CNY is supported')
@@ -44,6 +46,8 @@ def normalize(event_type, payload, now):
     elif event_type == 'REFUND_CONFIRMED':
         required_string(p, 'refund_no')
         positive_money(p, 'expected_amount_fen')
+        if p.get('tx_no') is not None:
+            required_string(p,'tx_no')
         p['confirmed_at'] = parse_time_ms(required_string(p, 'confirmed_at'))
     elif event_type == 'REFUND_ARRIVAL':
         required_string(p, 'refund_no')

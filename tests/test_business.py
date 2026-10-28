@@ -377,3 +377,55 @@ def test_repeat_close_preserves_confirmed_conclusion_on_reopen(service):
     result=service.get_issue('user-a',issue)
     assert result['status']=='CONFIRMED_PROBLEM'
     assert result['followup_mode']=='WAITING_FACT'
+
+def test_reopen_uses_latest_close_when_clock_does_not_move(service):
+    issue=pair(service)
+    service.act('user-a',issue,{'event_id':'c1','action':'CLOSE'})
+    service.act('user-a',issue,{'event_id':'o1','action':'REOPEN'})
+    action(service,issue,'CONFIRM_PROBLEM')
+    service.act('user-a',issue,{'event_id':'c2','action':'CLOSE'})
+    service.act('user-a',issue,{'event_id':'o2','action':'REOPEN'})
+    assert service.get_issue('user-a',issue)['status']=='CONFIRMED_PROBLEM'
+
+def test_receipt_hash_does_not_change_after_original_commit(service,monkeypatch):
+    from app.models import EventReceipt
+    hashes={}
+    original=service._record
+    def observe_record(*args):
+        receipt_id=original(*args)
+        with service.database.session_factory() as session:
+            hashes[receipt_id]=session.get(EventReceipt,receipt_id).payload_hash
+        return receipt_id
+    monkeypatch.setattr(service,'_record',observe_record)
+    result=service.receive('user-a','TXN',tx('a'))
+    event=service.get_event('user-a',result['receipt_id'])
+    assert event['payload_hash']==hashes[result['receipt_id']]
+
+@pytest.mark.parametrize('kind,payload',[
+    ('TXN',tx('bad-name',merchant_name={})),
+    ('REFUND_CONFIRMED',conf(tx_no=['bad-reference'])),
+])
+def test_invalid_optional_fields_rejected_without_poisoning_restart(service,kind,payload):
+    from app.service import DomainError
+    with pytest.raises(DomainError) as error:
+        service.receive('user-a',kind,payload)
+    assert error.value.status_code==422
+    service.recover()
+    assert service.list_issues('user-a')==[]
+
+
+def test_recovery_quarantines_invalid_original_receipt(service):
+    from app.models import EventReceipt
+    from app.services.events import dump,digest
+    payload=tx('poison',merchant_name={})
+    with service.database.session_factory.begin() as session:
+        receipt=EventReceipt(user_id='user-a',event_id=payload['event_id'],event_type='TXN',
+            payload_json=dump(payload),payload_hash=digest(payload),processing_state='RECEIVED')
+        session.add(receipt)
+        session.flush()
+        receipt_id=receipt.id
+    service.recover()
+    assert service.get_event('user-a',receipt_id)['processing_state']=='REJECTED'
+    service.receive('user-a','TXN',tx('valid-a'))
+    service.receive('user-a','TXN',tx('valid-b',5))
+    assert len(service.list_issues('user-a'))==1
