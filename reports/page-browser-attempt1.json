@@ -1,0 +1,35 @@
+{
+  "status": "FAIL",
+  "checks": [
+    {
+      "check": "页面加载、当前用户和空数据正确",
+      "passed": true
+    },
+    {
+      "check": "页面真实创建交易对并展示两笔原交易",
+      "passed": true
+    },
+    {
+      "check": "确认问题不结案，用户约定到期后真实发送提醒",
+      "passed": true
+    },
+    {
+      "check": "切换用户清空旧身份问题和消息",
+      "passed": true
+    },
+    {
+      "check": "退款72小时、60/40到账、结案依据和原样重放均正确",
+      "passed": true
+    },
+    {
+      "check": "关闭有明确确认，保留历史并提供显式重开入口",
+      "passed": true
+    },
+    {
+      "check": "页面暂停与恢复通过真实接口生效",
+      "passed": true
+    }
+  ],
+  "error": "",
+  "browser_errors": []
+}

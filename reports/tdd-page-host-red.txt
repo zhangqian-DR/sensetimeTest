@@ -1,0 +1,16 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+______________ test_page_and_assets_are_served_from_application _______________
+tests\test_page.py:11: in test_page_and_assets_are_served_from_application
+    assert response.status_code==200
+E   assert 404 == 200
+E    +  where 404 = <Response [404 Not Found]>.status_code
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\Projects\vibecoding_test_sensetime\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_page.py::test_page_and_assets_are_served_from_application
+1 failed, 1 passed, 1 warning in 1.56s

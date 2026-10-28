@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "check": "页面加载、当前用户和空数据正确",
+      "passed": true
+    },
+    {
+      "check": "页面真实创建交易对并展示两笔原交易",
+      "passed": true
+    },
+    {
+      "check": "确认问题不结案，用户约定到期后真实发送提醒",
+      "passed": true
+    },
+    {
+      "check": "切换用户清空旧身份问题和消息",
+      "passed": true
+    },
+    {
+      "check": "退款72小时、60/40到账、结案依据和原样重放均正确",
+      "passed": true
+    },
+    {
+      "check": "关闭有明确确认，保留历史并提供显式重开入口",
+      "passed": true
+    },
+    {
+      "check": "页面暂停与恢复通过真实接口生效",
+      "passed": true
+    },
+    {
+      "check": "商户外部文字转义，不执行HTML",
+      "passed": true
+    },
+    {
+      "check": "错误身份明确显示失败，不伪装成零条账目",
+      "passed": true
+    },
+    {
+      "check": "390像素窄屏无整页横向溢出",
+      "passed": true
+    },
+    {
+      "check": "全程无浏览器脚本异常",
+      "passed": true
+    }
+  ],
+  "browser_errors": [],
+  "database_directory": "C:\\Users\\zhangqian\\AppData\\Local\\Temp\\bill-followup-demo-iisu1835",
+  "time_utc": "2026-10-28T09:23:35.625589+00:00",
+  "browser": "Microsoft Edge / Playwright",
+  "backend": "真实HTTP，独立模拟文件库"
+}

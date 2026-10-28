@@ -1,5 +1,8 @@
 """FastAPI应用工厂；导入模块不创建或修改数据库。"""
 from contextlib import asynccontextmanager
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import logging
 
 from fastapi import FastAPI, Request
@@ -60,6 +63,13 @@ def create_app(settings=None, database=None, service=None):
                           description='CNY / Asia-Shanghai. Notifications and identities are simulated. Use a user test token for business actions; demo administrator token only for global controls.')
     application.state.settings = settings
     application.include_router(router)
+    # 静态页面只提供操作入口，账目和权限仍由原有业务接口控制。
+    static_dir = Path(__file__).resolve().parent / 'static'
+    application.mount('/static', StaticFiles(directory=static_dir), name='static')
+
+    @application.get('/', include_in_schema=False)
+    def dashboard():
+        return FileResponse(static_dir / 'index.html', media_type='text/html')
 
     @application.exception_handler(RequestValidationError)
     async def validation_error(request: Request, error: RequestValidationError):

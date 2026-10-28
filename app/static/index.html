@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>账单跟进 · 本地模拟</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%236357dc'/%3E%3Ctext x='20' y='29' text-anchor='middle' font-size='29' fill='white'%3E¥%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">¥<span></span></div>
+        <div><div class="brand-line"><h1>账单跟进</h1><span class="badge badge-simulation">本地模拟</span></div><p>发现异常，持续跟进，每一步都有记录。</p></div>
+      </div>
+      <div class="header-actions">
+        <label class="user-switch" for="user-select"><span class="field-caption">当前用户</span><select id="user-select" aria-label="切换演示用户"><option value="demo-token-a">用户 A</option><option value="demo-token-b">用户 B</option></select></label>
+        <button id="refresh-btn" class="btn btn-secondary" type="button"><span aria-hidden="true">↻</span> 刷新</button>
+        <a href="/docs" class="docs-link" target="_blank" rel="noopener">Swagger <span aria-hidden="true">↗</span></a>
+      </div>
+    </header>
+
+    <section class="connection-bar" aria-label="系统状态与连接设置">
+      <div class="connection-summary"><span class="status-dot" aria-hidden="true"></span><span id="system-status">等待连接</span><span class="divider" aria-hidden="true"></span><span class="muted">北京时间</span><time id="clock-value">—</time><span class="updated-label">更新于 <span id="last-updated">—</span></span></div>
+      <details class="connection-settings"><summary>连接设置 <span aria-hidden="true">⌄</span></summary><div class="settings-popover">
+        <h2>本地演示连接</h2><p class="muted">以下为虚构测试身份，仅用于本地演示。令牌仅在页面内存中使用，不写入浏览器存储。</p>
+        <label for="user-token">用户令牌<input id="user-token" type="password" value="demo-token-a" autocomplete="off" spellcheck="false"></label>
+        <label for="admin-token">演示管理员令牌<input id="admin-token" type="password" value="local-demo-admin-only" autocomplete="off" spellcheck="false"></label>
+        <button id="connect-btn" class="btn btn-primary" type="button">连接并加载</button>
+      </div></details>
+    </section>
+    <div id="error-banner" class="error-banner" role="alert" hidden></div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <section class="stats-grid" aria-label="当前用户跟进概览">
+      <article class="stat-card"><div class="stat-icon purple" aria-hidden="true">!</div><div><p>待跟进问题</p><strong id="stat-open">0</strong><span>疑似或已确认，尚未解决</span></div></article>
+      <article class="stat-card"><div class="stat-icon blue" aria-hidden="true">↩</div><div><p>退款记录</p><strong id="stat-refunds">0</strong><span>申请与到账按编号归集</span></div></article>
+      <article class="stat-card"><div class="stat-icon amber" aria-hidden="true">◷</div><div><p>提醒记录</p><strong id="stat-reminders">0</strong><span>计划与发送结果分别保留</span></div></article>
+      <article class="stat-card"><div class="stat-icon green" aria-hidden="true">✓</div><div><p>已解决问题</p><strong id="stat-resolved">0</strong><span>具有明确结案依据</span></div></article>
+    </section>
+
+    <main class="workspace">
+      <!-- 三个区域共用真实业务接口；此页面不预置或自动提交任何交易。 -->
+      <section class="panel issues-panel" aria-labelledby="issues-heading">
+        <div class="panel-heading"><div><span class="eyebrow">FOLLOW-UP</span><h2 id="issues-heading">问题列表</h2></div><span class="subtle-label">当前用户</span></div>
+        <label class="filter-label" for="issue-filter"><span>筛选状态</span><select id="issue-filter"><option value="ALL">全部问题</option><option value="OPEN">待确认</option><option value="CONFIRMED_PROBLEM">确认有问题</option><option value="RESOLVED">已解决</option><option value="NORMAL">正常购买</option><option value="CLOSED">已关闭</option></select></label>
+        <div id="issues-list" class="issues-list"><div class="empty-state"><div class="empty-icon" aria-hidden="true">≡</div><h3>还没有问题记录</h3><p>连接后加载已有问题，或在右侧提交一组模拟事件。</p><span class="empty-note">仅检查疑似重复消费和退款逾期</span></div></div>
+        <div class="panel-footnote"><span aria-hidden="true">ⓘ</span> 疑似不等于证实，已提醒不等于已解决。</div>
+      </section>
+
+      <section class="panel detail-shell" aria-labelledby="detail-heading">
+        <div class="panel-heading"><div><span class="eyebrow">DETAIL & HISTORY</span><h2 id="detail-heading">问题详情</h2></div><span class="subtle-label">事实 · 处理 · 依据</span></div>
+        <div id="detail-panel" class="detail-content"><div class="empty-state detail-empty"><div class="detail-illustration" aria-hidden="true"><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-check">✓</div></div><h3>从一条问题开始</h3><p>选择左侧问题，查看相关交易、退款差额、处理历史和结案依据。</p><div class="empty-principles"><span>原始事实保留</span><span>跟进过程可追溯</span></div></div></div>
+      </section>
+
+      <aside class="side-column" aria-label="模拟演示和通知">
+        <section class="panel demo-panel" aria-labelledby="demo-heading">
+          <div class="panel-heading"><div><span class="eyebrow">DEMO LAB</span><h2 id="demo-heading">模拟演示</h2></div><span class="badge badge-simulation">虚构数据</span></div>
+          <div class="demo-body">
+            <p class="section-description">点击后才会提交事件。所有结果来自实际业务检查。</p>
+            <div class="demo-group"><h3><span class="step-number">1</span> 加载模拟事件</h3><div class="button-grid"><button type="button" class="btn btn-secondary" data-demo="pair">两笔相近消费</button><button type="button" class="btn btn-secondary" data-demo="triple">三笔关联消费</button><button type="button" class="btn btn-secondary" data-demo="refund">申请退款 100 元</button><button type="button" class="btn btn-secondary" data-demo="replay">重放上一事件</button></div></div>
+            <div class="demo-group"><h3><span class="step-number">2</span> 推进演示时间</h3><div class="button-grid"><button type="button" class="btn btn-time" data-hours="24">+24 小时</button><button type="button" class="btn btn-time" data-hours="72">+72 小时</button></div><p class="warning-note">管理员全局时钟影响所有用户。推进后系统自行检查；真实模式不可推进。</p></div>
+            <div class="demo-group"><h3><span class="step-number">3</span> 补充到账事实</h3><label class="compact-label" for="refund-no">退款编号<input id="refund-no" type="text" placeholder="申请后自动填写，也可输入已有编号" autocomplete="off" spellcheck="false"></label><div class="button-grid"><button type="button" class="btn btn-secondary" data-demo="arrival60">到账 60 元</button><button type="button" class="btn btn-secondary" data-demo="arrival40">再到账 40 元</button></div></div>
+            <div class="followup-control"><div><h3>当前用户跟进</h3><p>暂停不丢事实，恢复不批量补催。</p></div><div class="segmented-actions"><button type="button" class="btn btn-small" data-paused="true">暂停</button><button type="button" class="btn btn-small" data-paused="false">恢复</button></div></div>
+          </div>
+        </section>
+
+        <section class="panel notifications-panel" aria-labelledby="notifications-heading"><div class="panel-heading"><div><span class="eyebrow">MESSAGES</span><h2 id="notifications-heading">模拟收件箱</h2></div><span class="subtle-label">仅成功发送</span></div><div id="notifications-list" class="notifications-list"><div class="empty-state compact"><div class="empty-icon" aria-hidden="true">✉</div><p>暂无已发送消息</p><span class="empty-note">待发送或结果未知不算发送成功</span></div></div></section>
+      </aside>
+    </main>
+
+    <section class="panel operation-panel" aria-labelledby="operation-heading"><div class="panel-heading"><div><span class="eyebrow">ACTIVITY</span><h2 id="operation-heading">本页操作记录</h2></div><span class="subtle-label">完整处理历史保存在系统中</span></div><div id="operation-log" class="operation-log"><p class="muted">尚未操作。这里显示本页请求与结果，不替代持久化业务历史。</p></div></section>
+    <footer class="page-footer"><span>人民币 · 北京时间 · 本地模拟</span><span>不删除交易，不联系商户，不操作真实账户。</span></footer>
+  </div>
+</body>
+</html>

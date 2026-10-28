@@ -316,3 +316,6 @@ def test_unanswered_followups_stop_after_two(service, open_duplicate):
 实施为节省时间将issues/reminders业务集中在app/service.py；events规范化独立于services/events.py，网关独立notifications.py。测试合并到test_foundations.py和test_business.py；演示数据由demo与测试函数生成，不再额外维护静态scenarios.json。接口与文档随实施同步完成。
 
 原计划逐步复选框保留为最初步骤，不据此虚构执行过不存在的文件命令；实际路径和证据以本节及验收报告为准。已实现与缺口明确分开，不将所有原计划内部增强项宣称完成。
+## 7. 后续授权：简单单页（追加阶段）
+
+用户确认先前后端验收后，授权约半小时补充HTML/CSS/原生JavaScript页面，并豁免前端TDD；后端静态托管仍先RED后GREEN。新增app/static三文件及scripts/verify_page.py，修改main挂载入口；业务服务不变。页面覆盖问题、操作、历史、模拟数据和全局时间控制，使用原有鉴权接口。完整80项回归及真实浏览器11项验证通过，证据见reports。无需外网前端资源，无独立构建流程，不引入运行时Playwright依赖。
